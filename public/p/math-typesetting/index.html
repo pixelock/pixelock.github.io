@@ -403,15 +403,19 @@
 $$
 \varphi = 1+\frac{1} {1+\frac{1} {1+\frac{1} {1+\cdots} } }
 $$</p>
-<p>Transformer 标准的 MHA(Multi-Head Attention) 结构中, $n_h$ 为 attention heads 数量, $d_h$ 为每个 head 内部的维度, $\mathbf{h}_t \in \mathbb{R}^d$ 代表了当前 attention layer 层中第 $t$ 个 token 的输入. 标准的 MHA 通过三个不同的参数矩阵 $W_Q,W_K,W_V\in\mathbb{R}^{d_hn_h \times d}$ 得到 $\mathbf{q}_t, \mathbf{k}_t, \mathbf{v}_t \in \mathbb{R}^{d_h n_h}$, 对应于:
-$$
+<p>Transformer 标准的 MHA(Multi-Head Attention) 结构中, $n_h$ 为 attention heads 数量, $d_h$ 为每个 head 内部的维度, $\mathbf{h}_t \in \mathbb{R}^d$ 代表了当前 attention layer 层中第 $t$ 个 token 的输入. 标准的 MHA 通过三个不同的参数矩阵 $W_Q,W_K,W_V\in\mathbb{R}^{d_hn_h \times d}$ 得到 $\mathbf{q}_t, \mathbf{k}_t, \mathbf{v}_t \in \mathbb{R}^{d_h n_h}$, 对应于:</p>
+<p>$$
 \begin{aligned}
-&amp; \mathbf{q}_t = W_Q \mathbf{h}_t \
-&amp; \mathbf{k}_t = W_K \mathbf{h}_t \
+&amp; \mathbf{q}_t = W_Q \mathbf{h}_t \\
+&amp; \mathbf{k}_t = W_K \mathbf{h}_t \\
 &amp; \mathbf{v}_t = W_V \mathbf{h}_t
 \end{aligned}
-$$
-在 MHA 中, $\mathbf{q}_t, \mathbf{k}_t, \mathbf{v}_t$ 被拆分为 $n_h$ 个 heads, 然后每个 head 中进行 attention 计算:</p>
+$$</p>
+<p>在 MHA 中, $\mathbf{q}_t, \mathbf{k}_t, \mathbf{v}_t$ 被拆分为 $n_h$ 个 heads, 然后每个 head 中进行 attention 计算:</p>
+<p>$$
+\mathbf{q}<em>t + \mathbf{q}</em>{1}
+$$</p>
+<p>每个 head 计算得到的结果再拼接起来, 经过参数矩阵 $W_O \in \mathbb{R}^{d \times d_h n_h}$ 得到 MHA 的输出张量.</p>
 <p>$$
 \begin{aligned}
 &amp; {\left[\mathbf{q}<em>{t, 1} ; \mathbf{q}</em>{t, 2} ; \ldots ; \mathbf{q}<em>{t, n_h}\right]=\mathbf{q}<em>t,} \
@@ -421,7 +425,6 @@ $$
 &amp; \mathbf{u}<em>t=W^O\left[\mathbf{o}</em>{t, 1} ; \mathbf{o}<em>{t, 2} ; \ldots ; \mathbf{o}</em>{t, n_h}\right]
 \end{aligned}
 $$</p>
-<p>每个 head 计算得到的结果再拼接起来, 经过参数矩阵 $W_O \in \mathbb{R}^{d \times d_h n_h}$ 得到 MHA 的输出张量.</p>
 </section>
 
 
@@ -455,28 +458,18 @@ $$</p>
                 src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"integrity="sha384-&#43;VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4&#43;/RRE05"crossorigin="anonymous"
                 defer
                 >
-            </script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" integrity="sha384-wcIxkf4k558AjM3Yz3BBFQUbk/zgIYC2R0QpeeYb+TwlBVMrlgLqwRjRtGZiK7ww" crossorigin="anonymous">
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" integrity="sha384-hIoBPJpTUs74ddyc4bFZSM1TVlQDA60VBbJS0oA934VSz82sBx1X7kSx2ATBDIyd" crossorigin="anonymous"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
         renderMathInElement(document.body, {
-          delimiters: [
-              {left: '$$', right: '$$', display: true},
-              {left: '$', right: '$', display: false},
-              {left: "\\begin{align}", right: "\\end{align}", display: true},
-              {left: "\\begin{aligned}", right: "\\end{aligned}", display: true},
-              {left: "\\begin{alignat}", right: "\\end{alignat}", display: true},
-              {left: "\\begin{gather}", right: "\\end{gather}", display: true},
-              {left: "\\begin{equation}", right: "\\end{equation}", display: true},
-              {left: '\\(', right: '\\)', display: false},
-              {left: '\\[', right: '\\]', display: true}
-          ],
-          throwOnError : true
-        });
-    });
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ],
+            ignoredClasses: ["gist"]
+        });})
 </script>
-
     
 </article>
 

@@ -45,14 +45,22 @@ $$
 $$
 
 Transformer 标准的 MHA(Multi-Head Attention) 结构中, $n_h$ 为 attention heads 数量, $d_h$ 为每个 head 内部的维度, $\mathbf{h}_t \in \mathbb{R}^d$ 代表了当前 attention layer 层中第 $t$ 个 token 的输入. 标准的 MHA 通过三个不同的参数矩阵 $W_Q,W_K,W_V\in\mathbb{R}^{d_hn_h \times d}$ 得到 $\mathbf{q}_t, \mathbf{k}_t, \mathbf{v}_t \in \mathbb{R}^{d_h n_h}$, 对应于:
+
 $$
 \begin{aligned}
-& \mathbf{q}_t = W_Q \mathbf{h}_t \\
-& \mathbf{k}_t = W_K \mathbf{h}_t \\
+& \mathbf{q}_t = W_Q \mathbf{h}_t \\\
+& \mathbf{k}_t = W_K \mathbf{h}_t \\\
 & \mathbf{v}_t = W_V \mathbf{h}_t
 \end{aligned}
 $$
+
 在 MHA 中, $\mathbf{q}_t, \mathbf{k}_t, \mathbf{v}_t$ 被拆分为 $n_h$ 个 heads, 然后每个 head 中进行 attention 计算:
+
+$$
+\mathbf{q}_t + \mathbf{q}_{1}
+$$
+
+每个 head 计算得到的结果再拼接起来, 经过参数矩阵 $W_O \in \mathbb{R}^{d \times d_h n_h}$ 得到 MHA 的输出张量.
 
 $$
 \begin{aligned}
@@ -64,4 +72,3 @@ $$
 \end{aligned}
 $$
 
-每个 head 计算得到的结果再拼接起来, 经过参数矩阵 $W_O \in \mathbb{R}^{d \times d_h n_h}$ 得到 MHA 的输出张量.
