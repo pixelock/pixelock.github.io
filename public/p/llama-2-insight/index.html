@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Pre-training 数据 对数据源进行了限制, 只从具有很高真实性的数据源中获取数据, 并进行 up-sampling, 增强知识, 抑制幻觉 数据规模 2T tokens. 训练细节 模型结构细节 Pre-Norm with RMSNorm SwiGLU activation function RoPE GQA, grouped-query">
+<title>Llama 2 Insight</title>
+
+<link rel='canonical' href='http://localhost:1313/p/llama-2-insight/'>
+
+<link rel="stylesheet" href="/scss/style.min.0304c6baf04e01a8fe70693791cb744d56a3578a3120a8796cefc66825aa39c7.css"><meta property='og:title' content="Llama 2 Insight">
+<meta property='og:description' content="Pre-training 数据 对数据源进行了限制, 只从具有很高真实性的数据源中获取数据, 并进行 up-sampling, 增强知识, 抑制幻觉 数据规模 2T tokens. 训练细节 模型结构细节 Pre-Norm with RMSNorm SwiGLU activation function RoPE GQA, grouped-query">
+<meta property='og:url' content='http://localhost:1313/p/llama-2-insight/'>
+<meta property='og:site_name' content='外置记忆体'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='LLM' /><meta property='article:tag' content='Model' /><meta property='article:tag' content='LLaMA' /><meta property='article:tag' content='Pre-training' /><meta property='article:tag' content='RLHF' /><meta property='article:published_time' content='2024-05-13T23:11:05&#43;08:00'/><meta property='article:modified_time' content='2024-05-13T23:11:05&#43;08:00'/>
+<meta name="twitter:title" content="Llama 2 Insight">
+<meta name="twitter:description" content="Pre-training 数据 对数据源进行了限制, 只从具有很高真实性的数据源中获取数据, 并进行 up-sampling, 增强知识, 抑制幻觉 数据规模 2T tokens. 训练细节 模型结构细节 Pre-Norm with RMSNorm SwiGLU activation function RoPE GQA, grouped-query">
+  
+
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_huda2458f72ce188392d75c5d51cd8e24e_373_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">外置记忆体</a></h1>
+            <h2 class="site-description">记录链接思维碎片</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/pixelock'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://twitter.com'
+                        target="_blank"
+                        title="Twitter"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-twitter" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M22 4.01c-1 .49 -1.98 .689 -3 .99c-1.121 -1.265 -2.783 -1.335 -4.38 -.737s-2.643 2.06 -2.62 3.737v1c-3.245 .083 -6.135 -1.395 -8 -4c0 0 -4.182 7.433 4 11c-1.872 1.247 -3.739 2.088 -6 2c3.308 1.803 6.913 2.423 10.034 1.517c3.58 -1.04 6.522 -3.723 7.651 -7.742a13.84 13.84 0 0 0 .497 -3.753c-.002 -.249 1.51 -2.772 1.818 -4.013z" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>归档</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>检索</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E9%93%BE%E6%8E%A5/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>链接</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/about/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于我</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+                    
+                        <li id="i18n-switch">  
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-language" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 5h7" />
+  <path d="M9 3v2c0 4.418 -2.239 8 -5 8" />
+  <path d="M5 9c-.003 2.144 2.952 3.908 6.7 4" />
+  <path d="M12 20l4 -9l4 9" />
+  <path d="M19.1 18h-6.2" />
+</svg>
+
+
+
+                            <select name="language" title="language" onchange="window.location.href = this.selectedOptions[0].value">
+                                
+                                    <option value="http://localhost:1313/en/" >English</option>
+                                
+                                    <option value="http://localhost:1313/" selected>中文</option>
+                                
+                            </select>
+                        </li>
+                    
+                
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ol>
+    <li><a href="#数据">数据</a>
+      <ol>
+        <li><a href="#数据规模">数据规模</a></li>
+      </ol>
+    </li>
+    <li><a href="#训练细节">训练细节</a>
+      <ol>
+        <li><a href="#模型结构细节">模型结构细节</a></li>
+        <li><a href="#训练参数">训练参数</a></li>
+      </ol>
+    </li>
+  </ol>
+
+  <ol>
+    <li><a href="#数据收集">数据收集</a></li>
+    <li><a href="#训练参数-1">训练参数</a></li>
+  </ol>
+
+  <ol>
+    <li><a href="#收集人类偏好数据">收集人类偏好数据</a>
+      <ol>
+        <li><a href="#safety-偏好数据">Safety 偏好数据</a>
+          <ol>
+            <li><a href="#risk-category">Risk category</a></li>
+            <li><a href="#attack-vectors">Attack vectors</a></li>
+          </ol>
+        </li>
+        <li><a href="#收集-训练迭代">收集-训练迭代</a></li>
+      </ol>
+    </li>
+    <li><a href="#reward-modeling">Reward Modeling</a>
+      <ol>
+        <li><a href="#训练目标">训练目标</a></li>
+        <li><a href="#训练数据">训练数据</a></li>
+        <li><a href="#训练参数-2">训练参数</a></li>
+      </ol>
+    </li>
+    <li><a href="#强化学习">强化学习</a>
+      <ol>
+        <li><a href="#训练策略">训练策略</a></li>
+        <li><a href="#ppo-损失函数">PPO 损失函数</a></li>
+        <li><a href="#训练参数-3">训练参数</a></li>
+      </ol>
+    </li>
+  </ol>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/llm/model/" >
+                LLM/Model
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/llama-2-insight/">Llama 2 Insight</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">2024 May 13</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 7 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <p><img src="https://cdn.jsdelivr.net/gh/pixelock/notebook-images/images/20240422171402.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<h1 id="pre-training">Pre-training
+</h1><h2 id="数据">数据
+</h2><ol>
+<li>对数据源进行了限制, 只从具有很高真实性的数据源中获取数据, 并进行 up-sampling, 增强知识, 抑制幻觉</li>
+</ol>
+<h3 id="数据规模">数据规模
+</h3><p>2T tokens.</p>
+<h2 id="训练细节">训练细节
+</h2><h3 id="模型结构细节">模型结构细节
+</h3><ul>
+<li>Pre-Norm with RMSNorm</li>
+<li>SwiGLU activation function</li>
+<li>RoPE</li>
+<li>GQA, grouped-query attention</li>
+</ul>
+<h3 id="训练参数">训练参数
+</h3><p>训练使用的 learning rate 和 context length 因模型大小而异, 详情见下图</p>
+<ul>
+<li>优化器 AdamW, $\beta_{1}=0.9$, $\beta_{2}=0.95$, $\varepsilon=10^{-5}$, $\text{weight decay}=0.1$</li>
+<li>Warmup: 2000 steps</li>
+<li>Cosine learning rate schedule, 最终学习率衰减到最大学习率的 10%</li>
+<li>Gradient clipping: 0.1</li>
+<li>Learning rate:
+<ul>
+<li>7B: $3 \times 10^{-4}$</li>
+<li>13B: $3 \times 10^{-4}$</li>
+<li>34B: $1.5 \times 10^{-4}$</li>
+<li>70B: $1.5 \times 10^{-4}$</li>
+</ul>
+</li>
+<li>词表大小: 32k</li>
+</ul>
+<p><img src="https://cdn.jsdelivr.net/gh/pixelock/notebook-images/images/20240428182510.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p>最终损失降低到:</p>
+<ul>
+<li>7B: 1.75</li>
+<li>13B: 1.77</li>
+<li>34B: 1.57</li>
+<li>70B: 1.50</li>
+</ul>
+<h1 id="sft">SFT
+</h1><h2 id="数据收集">数据收集
+</h2><p>人工编写 Prompt + Answer, 收集了 27540 高质量的 SFT data. 高质量数据包括两大类:</p>
+<ol>
+<li>helpfulness. 样本的 response 确实可以解决 prompt 的任务</li>
+<li>safety. 对于不安全的 prompt 拒绝回答</li>
+</ol>
+<p>Meta 在 SFT 这一步, 只收集了 20k+ 量级的. 做出这个决策的原因是, 在使用这个量级的数据 SFT 之后, 模型的输出, 与人类标注的质量可以相比较. 因此团队认为 SFT 的标注工作可以结束, 将标注资源放在 RLHF 要使用的偏好数据的标注.</p>
+<h2 id="训练参数-1">训练参数
+</h2><ul>
+<li>Batch Size: 64</li>
+<li>Learning Rate: 2e-5</li>
+<li>Learning Rate Schedule: cosine learning rate schedule</li>
+<li>Sequence Length: 4096</li>
+<li>Weight decay: 0.1</li>
+<li>Epochs: 2</li>
+</ul>
+<p>使用了 Packing 策略, 将训练集中所有的 prompts 和 answers 连接在一起后按长度切分, 保证序列长度被完全使用. 使用一个特殊符号作为 prompt 和 answer 的分隔.</p>
+<h1 id="rlhf">RLHF
+</h1><p>RLHF 的目标是将模型的输出行为对齐于人类偏好(human preferences)和遵循指令(instruction following).</p>
+<h2 id="收集人类偏好数据">收集人类偏好数据
+</h2><p>收集人类偏好数据(human preference data)来训练奖励模型. 收集的方法如下:</p>
+<ol>
+<li>人工编写 prompt</li>
+<li>将编写的 prompt 输入到 SFT 后的模型中, 得到两个输出作为采样, 并为这两个采样标注哪个回答更好</li>
+</ol>
+<ul>
+<li>为了让采样更具有多样性, 使用同一个 prompt 采样时, 使用不同的模型(model variants)进行采样(猜测是训练了两个 SFT 模型), 并且使用了不同的 temperature.</li>
+</ul>
+<ol start="3">
+<li>为偏好划分了 4 种标签: <code>significantly better</code>, <code>better</code>, <code>slightly better</code>, <code>negligibly better/ unsure</code></li>
+</ol>
+<p>偏好标注的关注点, 在与回答的 <strong>有用性(helpfulness)</strong> 和 <strong>安全性(safety)</strong> 两个方面, 因此判断四种标签的方法为:</p>
+<ul>
+<li><strong>helpfulness</strong>: <code>LLaMA2-Chat</code> 的回答可以满足用户要求, 提供所需的信息</li>
+<li><strong>safety</strong>: 模型的回答是否是安全的, 标签被设计为 3 类:
+<ul>
+<li>选择的回答更安全, 另外的回答不安全. 最终占整个数据集的 18%</li>
+<li>两个回答都是安全的. 47%</li>
+<li>两个回答都是不安全的. 35%</li>
+</ul>
+</li>
+</ul>
+<p>两者的标注是分开的. 例如 <code>giving detailed instructions on making a bomb</code> 的回答可以被认为有用, 但是不安全的. 这种分开标注, 相互不纠缠, 有更清晰的标注引导, 标注的质量会更高.</p>
+<p>从 safety 的三类标签也能看到, 抛弃了 <em>选择的回答是不安全, 另外的回答是安全的</em> 这种情况, 因为安全的回答才有资格作为更好的答案.</p>
+<p>最终收集了 1,418,091 条人工偏好数据.</p>
+<h3 id="safety-偏好数据">Safety 偏好数据
+</h3><p>safety 方面, 针对性地编写了一些 <strong>对抗性的 prompt(adversarial prompts)</strong>, 从两个角度进行了编写.</p>
+<h4 id="risk-category">Risk category
+</h4><p>Risk category, 可以理解为是可能产生不安全内容的潜在主题(topic). LLaMA 2 中划分了三个类别:</p>
+<ul>
+<li><strong>illicit and criminal activities</strong>: 各种犯罪行为</li>
+<li><strong>hateful and harmful activities</strong>: 歧视, 诽谤, 自残等行为</li>
+<li><strong>unqualified advice</strong>: 例如医疗建议, 金融建议, 法律建议等各种严肃建议的场景</li>
+</ul>
+<h4 id="attack-vectors">Attack vectors
+</h4><p>Attack vectors 可以理解为 prompt 的多种提问风格, 这种风格可以诱发模型做出不好的回答. 考虑了以下几种:</p>
+<ul>
+<li><strong>psychological manipulation</strong>: 心理操纵</li>
+<li><strong>logic manipulation</strong>: 逻辑操纵, 如虚假假设</li>
+<li><strong>syntactic manipulation</strong>: 句法操纵, 如故意的错误拼写, 汉语中还有形近字, 音近字, 拆字等攻击</li>
+<li><strong>semantic manipulation</strong>: 语义操控, 如隐喻, 阴阳怪气..</li>
+<li><strong>perspective manipulation</strong>: 透视操纵, 如不合适的角色扮演</li>
+</ul>
+<h3 id="收集-训练迭代">收集-训练迭代
+</h3><p>定期收集人工标注数据, LLaMA 2 中每周收集一次.</p>
+<p>在收集到更多的人工偏好数据后, 训练得到更好的奖励模型, 再通过 PPO 训练, 得到更好的 Chat 模型.</p>
+<p>在得到更好的 Chat 模型之后, 从 Chat 模型中采样得到的数据分布也会发生变化, 这会让模型产生一些新的数据分布. 这些新数据分布, 在下轮的训练中, 会拓宽奖励模型的视野, 提高模型的泛化性和整体性能.</p>
+<p>这种一轮轮迭代的方式, 帮助奖励模型的分布不断拓宽, 进而经过 RLHF 的 Chat 模型也进一步提升.</p>
+<h2 id="reward-modeling">Reward Modeling
+</h2><p>有研究发现 helpfulness 和 safety 存在 trade off 的情况, 这会使得用同一个奖励模型, 在这两个评价任务中都得到好的效果, 是非常有挑战性的. 因此, LLaMA 2 分开训练了两个奖励模型: Helpfulness RM 和 Safety RM.</p>
+<p>奖励模型使用<strong>预训练模型</strong>的 checkpoints 作为初始化, 保证模型具备预训练过程中获取的知识, 防止出现奖励模型和 RLHF 训练目标的 Chat 模型, 出现知识不匹配的情况, 进而导致产生幻觉.</p>
+<h3 id="训练目标">训练目标
+</h3><p>使用 <strong>Binary ranking loss</strong>, 目标是让 RM 对偏好的回复产生更高的分数.</p>
+<p>$$
+\mathcal{L}_{\text {ranking }}=-\log \left(\sigma\left(r_\theta\left(x, y_c\right)-r_\theta\left(x, y_r\right)-m(r)\right)\right)
+$$</p>
+<p>$r_\theta\left(x, y_c\right)$ 代表 Prompt $x$ 和 Chat 模型的 completion $y$ 给到 RM 模型 $\theta$ 得到的标量分数. $y_{c}$ 代表是标注人员更偏好的回复, $y_{r}$ 代表的是被拒绝的回复.</p>
+<p>Meta 进一步引入了 <strong>margin</strong> 成分 $m(r)$. Binary ranking loss 是减函数, 两个 completion 之间的 score 差距越大, 对应的损失就越小, 这也符合直觉. 而在融入减去一个非负的 margin 成分之后, 缩小了 completion 之间的 score 差别, 产生更大的损失, 迫使模型将两者之间的距离拉的更远.</p>
+<p>$m(r)$ 是一个离散函数, 它利用了偏好数据的 4 种标签: <code>significantly better</code>, <code>better</code>, <code>slightly better</code>, <code>negligibly better/ unsure</code>, 显式地利用这些标签来对不同差别的 completion 施加不同的 margin 大小, 整体上是对差异更显著的 completion 增加更大的 margin, 以期望拉开更大的差距.</p>
+<p>Meta 实验了两套大小不同的 $m(r)$ 离散函数 , 对应于下表中的 <code>Margin Small</code> 和 <code>Margin Large</code>, 实验证明增加的 margin 项确实提升 RM 的性能, 且更大的尺度的 $m(r)$ 对应的效果更好, 但更大尺度的 $m(r)$ 对相近回答的性能有所降低.</p>
+<p>$m(r)$ 离散函数详情:</p>
+<p><img src="https://cdn.jsdelivr.net/gh/pixelock/notebook-images/images/20240430142914.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p><strong>实验结果</strong>, 数值代表的是准确率:</p>
+<p><img src="https://cdn.jsdelivr.net/gh/pixelock/notebook-images/images/20240430143000.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<h3 id="训练数据">训练数据
+</h3><p>训练 RM 的数据集, 由上面所收集的人工偏好数据和开源偏好数据集组合而成.</p>
+<p>初始时, 由于没有人工数据, 使用开源偏好数据训练得到初版 RM 模型, 同时并行地收集人工偏好数据. 这里有一个矛盾点, RLHF 需要的 reward single, 应当是对 LLaMA 2-Chat 模型的输出进行的学习, 而开源数据是其他模型产生的. 但在论文的实验中, 没有观察到开源数据带来任何的负迁移效果. 因此最终的数据集混合了这些开源数据, 而这些开源数据, 会为 RM 带来更好的泛化性能.</p>
+<p>对于生成数据和开源数据这两种数据集, Helpfulness RM 和 Safety RM, 使用了不同的最佳混合比例</p>
+<ul>
+<li>Helpfulness RM 的训练集
+<ul>
+<li>使用了全部的 <code>人工标注得到的 Helpfulness 数据</code>, 占数据集的一半</li>
+<li>另外一半是从 <code>人工标注得到的 Safety 数据</code> 和 <code>开源数据集</code> 中采样得到</li>
+</ul>
+</li>
+<li>Safety RM 的训练集
+<ul>
+<li>使用了全部的 <code>人工标注得到的 Safety 数据</code>, 以及 <code>Anthropic Harmless data</code>, 这部分占整体的 90%</li>
+<li>另外 10% 混合了 <code>人工标注得到的 Helpfulness 数据</code> 和 <code>开源的 helpfulness 数据集</code>. 混合了这 10% 的 helpfulness 数据集之后, 能够有效的提升 Safety RM 在 chosen 和 rejected 都是安全的样本中的准确率</li>
+</ul>
+</li>
+</ul>
+<h3 id="训练参数-2">训练参数
+</h3><ul>
+<li>Epoch: 1, 训练的步数多会导致 over-fitting</li>
+<li>Learning Rate
+<ul>
+<li>5e-6 for 70B</li>
+<li>1e-5 for other scales</li>
+</ul>
+</li>
+<li>Learning Rate Schedule: cosine learning rate schedule, 最低降到 learning rate 的 10%</li>
+<li>Warm-up: 3% total steps</li>
+<li>Batch size: 512 pairs per batch</li>
+<li>Weight decay: 0.1</li>
+</ul>
+<h2 id="强化学习">强化学习
+</h2><h3 id="训练策略">训练策略
+</h3><p>Meta 探索了两种 RLHF 中常用的两种微调算法:</p>
+<ol>
+<li>PPO(Proximal Policy Optimization)</li>
+<li>拒绝采样微调(Rejection Sampling fine-tuning)</li>
+</ol>
+<p>这两种 RL 算法的区别在于:</p>
+<ul>
+<li>拒绝采样对于每个 prompt, 采样出 K 个样本; PPO 只采样一个样本</li>
+<li>PPO 在每一步 policy 模型参数更新后, 对当前训练的 prompt 进行采样; 拒绝采样时在强化学习开始之前, 从初始的 policy 中对<strong>所有</strong>的 prompt 都进行采样, 一次性采样得到所有输出.</li>
+</ul>
+<p>Meta 在强化学习这一步, 使用迭代训练的策略. 由于 RM 使用的偏好训练集是一批批采样标注得到的, 使用新标注的数据得到更好的 RM 模型, 并获取更多的 prompts, 这是训练更好的 RLHF 模型的基础. 实际上, Meta 训练了 <code>RLHF-V1</code> 到 <code>RLHF-V5</code> 共 5 个版本的模型.</p>
+<p>在包括 <code>RLHF-V4</code> 在内的早期版本中, 只使用<strong>拒绝采样</strong>进行训练. 在 <code>V5</code> 中, 顺序的使用这两种方法, 先使用拒绝采样方法训练, 再挑选出 Evaluation 最高的 checkpoint, 使用 PPO 继续进行训练.</p>
+<h3 id="ppo-损失函数">PPO 损失函数
+</h3><p>PPO 中的 reward function 如下. 这里由于有 Helpfulness RM 和 Safety RM 两种, 所以 reward function 中的 RM score 部分, 需要混合这两个模型的输出.</p>
+<p>$$
+R(g \mid p)=\bar{R}_c(g \mid p)-\beta D_{K L}\left(\pi_\theta(g \mid p) | \pi_0(g \mid p)\right)
+$$</p>
+<p>其中 $\bar{R}_c(g \mid p)$ 是混合后 RM 的输出, 它的定义如下:</p>
+<p>$$
+\begin{aligned}
+&amp; R_c(g \mid p)= \begin{cases}R_s(g \mid p) &amp; \text{if IS\_SAFETY}(p) \text { or } R_s(g \mid p)&lt;0.15 \\
+R_h(g \mid p) &amp; \text { otherwise }\end{cases}
+\end{aligned}
+$$</p>
+<p>$$
+\tilde{R}_c(g \mid p)=\operatorname{WHITEN}\left(\operatorname{LOGIT}\left(R_c(g \mid p)\right)\right)
+$$</p>
+<p>其中 $R_s(g \mid p)$ 代表 Safety RM 的输出, $R_h(g \mid p)$ 代表 Helpfulness RM 的输出. 优先考虑安全性. 其中人工编写的 prompt 已经标记了哪些是可能引发不安全回答的, 对应上式中的 $\text{IS\_SAFETY}(p)$, 对于这部分可能引发安全问题的样本, 以及 Safety RM 输出的分数小于 0.15 的阈值的不安全回答, 这两类的不安全情况, 优先考虑安全分数. 0.15 阈值对应的是 Safety RM 0.89 的准确率和在 Meta Safety test set 上 0.55 的召回率.</p>
+<p>其他安全的情况, 再考虑 Helpfulness RM 的输出.</p>
+<p>在混合了两种 RM 的输出后, $\text{LOGIT}$ 是 sigmoid 的反函数, 再进行白化, 目的是增加稳定性, 与 KL 散度损失项取得合适的平衡.</p>
+<h3 id="训练参数-3">训练参数
+</h3><ul>
+<li>使用 AdamW 优化器, 对应的参数为 $\beta_{1}=0.9$, $\beta_{2}=0.95$, $\varepsilon=10^{-5}$, $\text{weight decay}=0.1$</li>
+<li>Gradient clipping 1.0</li>
+<li>Learning rate: 1e-6</li>
+<li>PPO Micro batch size 64, batch size 512, PPO clip threshold 0.2</li>
+<li>损失函数中的 KL 系数, 在 7B 和 13B 模型中 $\beta=0.01$, 在 34B 和 70B 模型中 $\beta=0.005$</li>
+<li>不同规模的模型训练步数在 200 到 400 步之间, 并构建了 dev prompts 数据集, 做 early stopping</li>
+</ul>
+<h1 id="总结">总结
+</h1><p><strong>SFT的必要性和问题</strong></p>
+<p>每个标注人员的创作的 prompt 和 completion 都有很大的多样性, 在这些数据集上进行 SFT, 得到的模型可以学习这种多样性.</p>
+<p>这种多样性是很长尾的, 这些长尾数据中也会有很多不好的结果, 这些是 SFT 无法解决的.</p>
+<p><strong>RLHF的作用</strong></p>
+<p>比较两个 completion 哪个更好, 这个任务相对更简单, 因此 RM 可以很快地学习到将低分分配给效果不好的长尾分布, 使得最差的答案在分布上逐渐被删除. 这一点是通过人类偏好数据标注和 RLHF 训练过程配合得到的.</p>
+<p>LLM 超越人类能力的上限, 是通过 RLHF 的人类监督信号得到的, 它比 SFT 更重要.</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/llm/">LLM</a>
+        
+            <a href="/tags/model/">Model</a>
+        
+            <a href="/tags/llama/">LLaMA</a>
+        
+            <a href="/tags/pre-training/">Pre-Training</a>
+        
+            <a href="/tags/rlhf/">RLHF</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI&#43;WdtXRGWt2kTvGFasHpSy3SV"crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG&#43;vnGctmUb0ZY0l8"crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"integrity="sha384-&#43;VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4&#43;/RRE05"crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.body, {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ],
+            ignoredClasses: ["gist"]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/p/deepseek-v2-insight/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Deepseek V2 Insight</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    <div class="disqus-container">
+    <div id="disqus_thread"></div>
+<script>
+    window.disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "hugo-theme-stack" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div>
+
+<style>
+    .disqus-container {
+        background-color: var(--card-background);
+        border-radius: var(--card-border-radius);
+        box-shadow: var(--shadow-l1);
+        padding: var(--card-padding);
+    }
+</style>
+
+<script>
+    window.addEventListener('onColorSchemeChange', (e) => {
+        if (typeof DISQUS == 'object') {
+            DISQUS.reset({
+                reload: true
+            });
+        }
+    })
+</script>
+
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+        2024 pixelock
+    </section>
+    
+    <section class="powerby">
+        
+            Hello my friend <br/>
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.26.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>
