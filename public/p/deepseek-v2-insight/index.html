@@ -1,0 +1,1890 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Paper: DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model Github: DeepSeek-V2 模型结构 模型整体结构: MLA + MoE MLA: 在大幅缩小 KV Cache 的同时, 获得超越 MHA 的效果 MoE: 共 236B 参数, 每个 token 激活 21B 参数 MLA MHA 在推理阶段的劣势">
+<title>Deepseek V2 Insight</title>
+
+<link rel='canonical' href='http://localhost:1313/p/deepseek-v2-insight/'>
+
+<link rel="stylesheet" href="/scss/style.min.0304c6baf04e01a8fe70693791cb744d56a3578a3120a8796cefc66825aa39c7.css"><meta property='og:title' content="Deepseek V2 Insight">
+<meta property='og:description' content="Paper: DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model Github: DeepSeek-V2 模型结构 模型整体结构: MLA + MoE MLA: 在大幅缩小 KV Cache 的同时, 获得超越 MHA 的效果 MoE: 共 236B 参数, 每个 token 激活 21B 参数 MLA MHA 在推理阶段的劣势">
+<meta property='og:url' content='http://localhost:1313/p/deepseek-v2-insight/'>
+<meta property='og:site_name' content='外置记忆体'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='LLM' /><meta property='article:tag' content='Model' /><meta property='article:tag' content='Pre-training' /><meta property='article:published_time' content='2024-05-13T10:28:37&#43;08:00'/><meta property='article:modified_time' content='2024-05-13T10:28:37&#43;08:00'/>
+<meta name="twitter:title" content="Deepseek V2 Insight">
+<meta name="twitter:description" content="Paper: DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model Github: DeepSeek-V2 模型结构 模型整体结构: MLA + MoE MLA: 在大幅缩小 KV Cache 的同时, 获得超越 MHA 的效果 MoE: 共 236B 参数, 每个 token 激活 21B 参数 MLA MHA 在推理阶段的劣势">
+  
+
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_huda2458f72ce188392d75c5d51cd8e24e_373_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">外置记忆体</a></h1>
+            <h2 class="site-description">记录链接思维碎片</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/pixelock'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://twitter.com'
+                        target="_blank"
+                        title="Twitter"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-twitter" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M22 4.01c-1 .49 -1.98 .689 -3 .99c-1.121 -1.265 -2.783 -1.335 -4.38 -.737s-2.643 2.06 -2.62 3.737v1c-3.245 .083 -6.135 -1.395 -8 -4c0 0 -4.182 7.433 4 11c-1.872 1.247 -3.739 2.088 -6 2c3.308 1.803 6.913 2.423 10.034 1.517c3.58 -1.04 6.522 -3.723 7.651 -7.742a13.84 13.84 0 0 0 .497 -3.753c-.002 -.249 1.51 -2.772 1.818 -4.013z" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>归档</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>检索</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E9%93%BE%E6%8E%A5/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>链接</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/about/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于我</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+                    
+                        <li id="i18n-switch">  
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-language" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 5h7" />
+  <path d="M9 3v2c0 4.418 -2.239 8 -5 8" />
+  <path d="M5 9c-.003 2.144 2.952 3.908 6.7 4" />
+  <path d="M12 20l4 -9l4 9" />
+  <path d="M19.1 18h-6.2" />
+</svg>
+
+
+
+                            <select name="language" title="language" onchange="window.location.href = this.selectedOptions[0].value">
+                                
+                                    <option value="http://localhost:1313/en/" >English</option>
+                                
+                                    <option value="http://localhost:1313/" selected>中文</option>
+                                
+                            </select>
+                        </li>
+                    
+                
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ol>
+    <li><a href="#mla">MLA</a>
+      <ol>
+        <li><a href="#mha-在推理阶段的劣势">MHA 在推理阶段的劣势</a></li>
+        <li><a href="#low-rank-key-value-joint-compression">Low-Rank Key-Value Joint Compression</a></li>
+        <li><a href="#rope-with-mla">RoPE with MLA</a></li>
+        <li><a href="#kv-cache-最终大小">KV Cache 最终大小</a></li>
+        <li><a href="#mla-的完整过程">MLA 的完整过程</a>
+          <ol>
+            <li><a href="#代码">代码</a></li>
+          </ol>
+        </li>
+      </ol>
+    </li>
+    <li><a href="#moe">MoE</a>
+      <ol>
+        <li><a href="#代码-1">代码</a>
+          <ol>
+            <li><a href="#moegate">MoEGate</a></li>
+            <li><a href="#moe-forward">MoE forward</a></li>
+          </ol>
+        </li>
+      </ol>
+    </li>
+  </ol>
+
+  <ol>
+    <li><a href="#pre-training">Pre-Training</a>
+      <ol>
+        <li><a href="#数据构建">数据构建</a></li>
+        <li><a href="#训练超参数">训练超参数</a></li>
+        <li><a href="#长上下文扩展">长上下文扩展</a></li>
+      </ol>
+    </li>
+    <li><a href="#对齐训练">对齐训练</a>
+      <ol>
+        <li><a href="#sft">SFT</a></li>
+        <li><a href="#rl">RL</a></li>
+      </ol>
+    </li>
+  </ol>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/llm/model/" >
+                LLM/Model
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/deepseek-v2-insight/">Deepseek V2 Insight</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">2024 May 13</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 17 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <p>Paper: <a class="link" href="https://arxiv.org/abs/2405.04434"  target="_blank" rel="noopener"
+    >DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model</a></p>
+<p>Github: <a class="link" href="https://github.com/deepseek-ai/DeepSeek-V2"  target="_blank" rel="noopener"
+    >DeepSeek-V2</a></p>
+<h1 id="模型结构">模型结构
+</h1><p>模型整体结构: <strong>MLA + MoE</strong></p>
+<ul>
+<li>MLA: 在大幅缩小 KV Cache 的同时, 获得超越 MHA 的效果</li>
+<li>MoE: 共 236B 参数, 每个 token 激活 21B 参数</li>
+</ul>
+<p><img src="https://cdn.jsdelivr.net/gh/pixelock/notebook-images/images/20240509165232.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<h2 id="mla">MLA
+</h2><h3 id="mha-在推理阶段的劣势">MHA 在推理阶段的劣势
+</h3><p>DeepSeek-V2 对 Transformer 架构中的自注意力机制进行了全方位的创新, 使用 <strong>MLA(Multi-head Latent Attention)</strong> 结构.</p>
+<p>Transformer 标准的 MHA(Multi-Head Attention) 结构中, $n_h$ 为 attention heads 数量, $d_h$ 为每个 head 内部的维度, $\mathbf{h}_t \in \mathbb{R}^d$ 代表了当前 attention layer 层中第 $t$ 个 token 的输入. 标准的 MHA 通过三个不同的参数矩阵 $W_Q,W_K,W_V \in \mathbb{R}^{d_h n_h \times d}$ 得到 $\mathbf{q}_t, \mathbf{k}_t, \mathbf{v}_t \in \mathbb{R}^{d_h n_h}$, 对应于:</p>
+<p>$$
+\begin{aligned}
+&amp; \mathbf{q}_t = W_Q \mathbf{h}_t \
+&amp; \mathbf{k}_t = W_K \mathbf{h}_t \
+&amp; \mathbf{v}_t = W_V \mathbf{h}_t
+\end{aligned}
+$$</p>
+<p>在 MHA 中, $\mathbf{q}_t, \mathbf{k}_t, \mathbf{v}_t$ 被拆分为 $n_h$ 个 heads, 然后每个 head 中进行 attention 计算:</p>
+<p>$$
+\begin{aligned}
+&amp; {\left[\mathbf{q}<em>{t, 1} ; \mathbf{q}</em>{t, 2} ; \ldots ; \mathbf{q}<em>{t, n_h}\right]=\mathbf{q}<em>t,} \
+&amp; {\left[\mathbf{k}</em>{t, 1} ; \mathbf{k}</em>{t, 2} ; \ldots ; \mathbf{k}<em>{t, n_h}\right]=\mathbf{k}<em>t,} \
+&amp; {\left[\mathbf{v}</em>{t, 1} ; \mathbf{v}</em>{t, 2} ; \ldots ; \mathbf{v}<em>{t, n_h}\right]=\mathbf{v}<em>t,} \
+&amp; \mathbf{o}</em>{t, i}=\sum</em>{j=1}^t \operatorname{Softmax}<em>j\left(\frac{\mathbf{q}</em>{t, i}^T \mathbf{k}<em>{j, i}}{\sqrt{d_h}}\right) \mathbf{v}</em>{j, i}, \
+&amp; \mathbf{u}<em>t=W^O\left[\mathbf{o}</em>{t, 1} ; \mathbf{o}<em>{t, 2} ; \ldots ; \mathbf{o}</em>{t, n_h}\right],
+\end{aligned}
+$$</p>
+<p>每个 head 计算得到的结果再拼接起来, 经过参数矩阵 $W_O \in \mathbb{R}^{d \times d_h n_h}$ 得到 MHA 的输出张量.</p>
+<p>在推理阶段, 所有的 keys 和 values 作为 KV Cache, 需要被缓存, 以加速推理. 而根据上式, MHA 结构做 KV Cache, 每个 token 需要缓存 $2n_h d_h l$ 个参数, $l$ 代表 attention layer 数量. MHA 的 KV Cache 量是非常大的, 这会对最大化推理阶段可以支持的 batch size 和 sequence length 是瓶颈.</p>
+<h3 id="low-rank-key-value-joint-compression">Low-Rank Key-Value Joint Compression
+</h3><p>低秩KV联合压缩(Low-Rank Key-Value Joint Compression)是 MLA 结构的核心, 可以大幅缩小 KV Cache 的占用.</p>
+<p>$$
+\begin{aligned}
+\mathbf{c}_t^{K V} &amp; =W^{D K V} \mathbf{h}_t \
+\mathbf{k}_t^C &amp; =W^{U K} \mathbf{c}_t^{K V} \
+\mathbf{v}_t^C &amp; =W^{U V} \mathbf{c}_t^{K V}
+\end{aligned}
+$$</p>
+<p>$\mathbf{c}_t^{K V} \in \mathbb{R}^{d_c}$ 是压缩后的可训练隐向量, 目标是将 keys 和 values 中的信息压缩进去. $d_c(\ll d_h n_h)$ 代表了隐向量的维度. $W^{D K V} \in \mathbb{R}^{d_c \times d}$ 是输入的下投影矩阵(down-projection matrix), 将输入的维度由 $d$ 压缩到 $d_c$; $W^{U K}, W^{U V} \in \mathbb{R}^{d_h n_h \times d_c}$ 是 keys 和 values 的上投影矩阵(up-projection matrices).</p>
+<p>推理过程中, MLA 只需要为每个 token 缓存 $\mathbf{c}_t^{K V}$, 这样每个 token 的 KV Cache 大小减少为 $d_c l$ 个参数.</p>
+<p>下图对比了常见的 attention 方法 MHA, GQA, MQA 和 MLA 之间在 KV Cache 上的区别. 每个子图代表了某个 token 的计算情况, 所有子图中都有 8 个 heads. 上面这种 <strong>KV joint compression</strong> 的方法确实可以更进一步地节省 KV Cache 的占用, 虽然在计算量上有增加.
+<img src="https://cdn.jsdelivr.net/gh/pixelock/notebook-images/images/20240509170142.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p>另外为了降低训练过程中 activation 的存储占用, 对 queries 也进行了 low-rank compression, 但这个操作不会降低 KV Cache 的占用, 是为了降低训练时的消耗.</p>
+<p>$$
+\begin{aligned}
+\mathbf{c}_t^{Q} &amp; =W^{DQ} \mathbf{h}_t \
+\mathbf{q}_t^C &amp; =W^{U Q} \mathbf{c}_t^{Q}
+\end{aligned}
+$$</p>
+<p>$\mathbf{c}_t^{Q} \in \mathbb{R}^{d_c^{\prime}}$ 代表了压缩后的隐向量, $d_c^{\prime}(\ll d_h n_h)$ 代表了压缩后隐向量的维度, $W^{DQ} \in \mathbb{R}^{d_c^{\prime} \times d}$, $W^{UQ} \in \mathbb{R}^{d_h n_h \times d_c^{\prime}}$ 分别是下投影和上投影矩阵.</p>
+<h3 id="rope-with-mla">RoPE with MLA
+</h3><p>Low-Rank compression 一个最大的问题是与 KV Cache 不兼容. RoPE 需要作用在 queris 和 keys 上, 而作为新的 KV Cache 的 $\mathbf{c}_t^{K V}$ 在计算得到 $\mathbf{k}_t^C$ 之后, 再施加 RoPE, 这样在生成每个 token 时, 都需要对这个 token 之前的所有 token, 都重新计算得到他们的 keys, 这就丧失了 KV Cache 存在的意义, 大幅降低了推理的效率.</p>
+<p>为了解决这个问题, 设计了两种不同作用的 queries 和 keys:</p>
+<ul>
+<li>其中一类 queries 和 keys 不去融合 RoPE, 这些可以完全发挥 Low-Rank compression 的作用</li>
+<li>另外一类queries 和 keys 去融合 RoPE, 这一类就无法再去使用 Low-Rank compression, 而是采用了 MQA(Multi-Query Attention) 的方式, 所有的 query 共享同一个 keys</li>
+</ul>
+<p>这两种 queries 和 keys 在计算 Multi-head attention 之前经过各种计算得到上面的两类, 然后在隐向量维度上拼接起来, 组成一个更长的向量进行 attention 计算. 相当于每个参与 attention 计算的向量, 部分参数包含 RoPE 位置信息, 另外的参数则不包含.</p>
+<p>具体来说, 上面使用 Low-Rank compression 得到的 $\mathbf{k}_t^C$ 和 $\mathbf{q}<em>t^C$ 是不需要计算 RoPE 的 queries 和 keys, 相应的维度为 $d_h n_h$. 另外设置需要计算 RoPE 的 queries 和 keys $\mathbf{q}</em>{t,i}^{R} \in \mathbb{R}^{d_h^R}$ 和 $\mathbf{k}_t^R \in \mathbb{R}^{d_h^R}$, 其中 $i$ 表示第 $i$ 个 head, $d_h^R$ 代表了这部分每个 head 中的维度.</p>
+<p>在使用了上面的方法, 将 MLA 与 RoPE 结合后, 对应的计算过程为:</p>
+<p>$$
+\begin{aligned}
+&amp; {\left[\mathbf{q}<em>{t, 1}^R ; \mathbf{q}</em>{t, 2}^R ; \ldots ; \mathbf{q}<em>{t, n_h}^R\right]=\mathbf{q}<em>t^R=\operatorname{RoPE}\left(W^{Q R} \mathbf{c}<em>t^Q\right),} \
+&amp; \mathbf{k}<em>t^R=\operatorname{RoPE}\left(W^{K R} \mathbf{h}<em>t\right) \text {, } \
+&amp; \mathbf{q}</em>{t, i}=\left[\mathbf{q}</em>{t, i}^C ; \mathbf{q}</em>{t, i}^R\right] \text {, } \
+&amp; \mathbf{k}</em>{t, i}=\left[\mathbf{k}</em>{t, i}^C ; \mathbf{k}<em>t^R\right] \text {, } \
+&amp; \mathbf{o}</em>{t, i}=\sum_{j=1}^t \operatorname{Softmax}<em>j\left(\frac{\mathbf{q}</em>{t, i}^T \mathbf{k}<em>{j, i}}{\sqrt{d_h+d_h^R}}\right) \mathbf{v}</em>{j, i}^C \
+&amp; \mathbf{u}<em>t=W^O\left[\mathbf{o}</em>{t, 1} ; \mathbf{o}<em>{t, 2} ; \ldots ; \mathbf{o}</em>{t, n_h}\right],
+\end{aligned}
+$$</p>
+<p>可以看到, 每个 head 中计算 RoPE 的 query $\mathbf{q}_{t,i}^{R}$ 和 $\mathbf{k}_t^R$ 的维度都是 $d_h^R$, 而 query 是每个 head 都有, 但 key 是所有 heads 中的 queries 中共享同一个 $\mathbf{k}_t^R$, 是标准的 MQA 思路.</p>
+<p>$\mathbf{q}<em>{t, i}^C ; \mathbf{q}</em>{t, i}^R$ 两种 query 拼接在一起得到新的 query, $\mathbf{k}_{t, i}^C ; \mathbf{k}_t^R$ 两种 key 拼接在一起得到新的 key, 也能明显看到, key 的一部分是 MHA 的思路, 使用了 Low-Rank compression, 另一部分是所有 head 中拼接相同的 key, 使用了 MQA 的思路.</p>
+<h3 id="kv-cache-最终大小">KV Cache 最终大小
+</h3><p>从上面两节可以看到, MLA 是一种 MHA 和 MQA 之间的均衡:</p>
+<ul>
+<li>MHA 部分对应的 $\mathbf{k}_t^C \in \mathbb{R}^{d_h n_h}$ 在上面分析了, 缓存的是 $\mathbf{c}<em>t^{K V}$, $\mathbf{c}<em>t^{K V}$ 其实也是所有 head 共用的, 是经过 $W^{U K}$ 得到了 attention 计算各个 head 对应的 keys $\mathbf{k}<em>t^C = \left[\mathbf{k}</em>{t, 1}^R ; \mathbf{k}</em>{t, 2}^R ; \ldots ; \mathbf{k}</em>{t, n_h}^R\right]$</li>
+<li>MQA 部分引入的 $\mathbf{k}_t^R$ 是需要被缓存的, 这部分包含了 RoPE 的位置信息</li>
+</ul>
+<p>因此整个 MLA 机制需要缓存的内容为 $\mathbf{c}_t^{K V} \in \mathbb{R}^{d_c}$ 和 $\mathbf{k}_t^R \in \mathbb{R}^{d_h^R}$, 这样每个 token 对应的 KV Cache 为 $(d_c + d_h^{R})l$ 个元素.</p>
+<p>下图是 MHA, GQA, MQA, MLA 四种 attention 机制的 KV Cache 的对比. 参考开源的 <a class="link" href="https://huggingface.co/deepseek-ai/DeepSeek-V2"  target="_blank" rel="noopener"
+    >DeepSeek-V2</a> 模型中的 <a class="link" href="https://huggingface.co/deepseek-ai/DeepSeek-V2/blob/main/config.json"  target="_blank" rel="noopener"
+    >config</a>, 可以得到 heads 数量为 $n_h = 128$, head_dim $d_h=128$. 而 MLA 对应的参数为 $d_c=512$, $d_h^R=64$. 可以得到 MLA 中每个 token 对应的 cache 大小为 $(512 + 64)l = \frac{9}{2} \times 128 l = \frac{9}{2} d_h l$, 这个大小介于 MHA 的 $256 d_h l$ 与 MQA 的 $2 d_h l$ 之间. 与 GQA 相比, 相当与 group 数量 $n_g = 2.25$ 大小.</p>
+<p><img src="https://cdn.jsdelivr.net/gh/pixelock/notebook-images/images/20240510144642.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p>消融实验设计了两组, 分别是 MHA, GQA, MQA 这三种传统方案的对比, 以及 MHA 和 MLA 这两种方案的对比.</p>
+<p>在 MHA, GQA, MQA 对比的消融实现中, 使用 7B 大小的模型, 在 1.33T tokens 上分别进行训练得到. 下表中很明显, MHA 是显著由于另外两种方案.</p>
+<p><img src="https://cdn.jsdelivr.net/gh/pixelock/notebook-images/images/20240510150109.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p>再对比 MHA 和 MLA. 结合 MoE 架构, 在 16B 总参数规模和 250B 总参数规模进行了实验, 对比结果如下表, 在显著降低 KV Cache 的情况下(Small MoE 中 MLA 的 cache 大小为 MHA 的 14%, Large MoE 中为 4%), 基本上在各个 benchmark 上, MLA 都明显超越了 MHA.</p>
+<p><img src="https://cdn.jsdelivr.net/gh/pixelock/notebook-images/images/20240510150203.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<h3 id="mla-的完整过程">MLA 的完整过程
+</h3><p>MLA 中, 第 $t$ 个 token 在 attention 结构中完整的计算过程如下:</p>
+<p>$$
+\begin{aligned}
+&amp; \mathbf{c}<em>t^Q=W^{D Q} \mathbf{h}<em>t, \
+&amp; {\left[\mathbf{q}</em>{t, 1}^C ; \mathbf{q}</em>{t, 2}^C ; \ldots ; \mathbf{q}<em>{t, n_h}^C\right]=\mathbf{q}<em>t^C=W^{U Q} \mathbf{c}<em>t^Q ，} \
+&amp; {\left[\mathbf{q}</em>{t, 1}^R ; \mathbf{q}</em>{t, 2}^R ; \ldots ; \mathbf{q}</em>{t, n_h}^R\right]=\mathbf{q}<em>t^R=\operatorname{RoPE}\left(W^{Q R} \mathbf{c}<em>t^Q\right) \text {, }} \
+&amp; \mathbf{q}</em>{t, i}=\left[\mathbf{q}</em>{t, i}^C ; \mathbf{q}<em>{t, i}^R\right] \text {, } \
+&amp; \mathbf{c}<em>t^{K V}=W^{D K V} \mathbf{h}<em>t \text {, } \
+&amp; {\left[\mathbf{k}</em>{t, 1}^C ; \mathbf{k}</em>{t, 2}^C ; \ldots ; \mathbf{k}</em>{t, n_h}^C\right]=\mathbf{k}<em>t^C=W^{U K} \mathbf{c}<em>t^{K V},} \
+&amp; \mathbf{k}<em>t^R=\operatorname{RoPE}\left(W^{K R} \mathbf{h}<em>t\right), \
+&amp; \mathbf{k}</em>{t, i}=\left[\mathbf{k}</em>{t, i}^C ; \mathbf{k}<em>t^R\right], \
+&amp; {\left[\mathbf{v}</em>{t, 1}^C ; \mathbf{v}</em>{t, 2}^C ; \ldots ; \mathbf{v}</em>{t, n_h}^C\right]=\mathbf{v}<em>t^C=W^{U V} \mathbf{c}<em>t^{K V},} \
+&amp; \mathbf{o}</em>{t, i}=\sum</em>{j=1}^t \operatorname{Softmax}<em>j\left(\frac{\mathbf{q}</em>{t, i}^T \mathbf{k}<em>{j, i}}{\sqrt{d_h+d_h^R}}\right) \mathbf{v}</em>{j, i^{\prime}}^C \
+&amp; \mathbf{u}<em>t=W^O\left[\mathbf{o}</em>{t, 1} ; \mathbf{o}<em>{t, 2} ; \ldots ; \mathbf{o}</em>{t, n_h}\right],
+\end{aligned}
+$$</p>
+<p>对应的流程图如下(这图真的清晰, 每个张量的 head 情况都准确描述):</p>
+<p><img src="https://cdn.jsdelivr.net/gh/pixelock/notebook-images/images/20240510092425.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<h4 id="代码">代码
+</h4><p>具体的细节还是要看代码. 从上面的公式中很明显可以看到引入了很多的权重参数$W$. 首先我们先定义下各个大小参数, 结合开源的 <a class="link" href="https://huggingface.co/deepseek-ai/DeepSeek-V2"  target="_blank" rel="noopener"
+    >DeepSeek-V2</a> 模型中的 <a class="link" href="https://huggingface.co/deepseek-ai/DeepSeek-V2/blob/main/config.json"  target="_blank" rel="noopener"
+    >config</a> 中的数值:</p>
+<ul>
+<li><code>hidden_size</code>: 本层输入的大小, 对应上面的 $d$, 值为 5120</li>
+<li><code>num_heads</code>: head 数量, 对应 $n_h$, 值为 128</li>
+<li><code>q_lora_rank</code>: queries 进行 low-rank compression 后的维度, 对应 $d_c^{\prime}$, 值为 1536</li>
+<li><code>qk_nope_head_dim</code>: query 中进行 low-rank compression 不需要进行 RoPE 的维度, 相当于原始的 head 内的维度, 对应 $d_h$, 值为 128</li>
+<li><code>qk_rope_head_dim</code>: query 中进行 RoPE 的维度, 对应 $d_h^R$, 值为 64</li>
+<li><code>q_head_dim</code>: query 拼接后的维度, 对应 $d_h + d_h^R$, 值为 128 + 64</li>
+<li><code>kv_lora_rank</code>: keys 进行 low-rank compression 后的维度, 对应 $d_c$, 值为 512</li>
+<li><code>v_head_dim</code>: values 对应的维度, 即原始的 head 内的维度, 对应 $d_h$, 值为 128</li>
+</ul>
+<p>在代码中, 关于 query 和 key 这部分定义了 4 个参数权重变量, MLA 引入的各种权重参数, 可以看做通过各种拼接组合, 最终形成了这 4 个变量:</p>
+<ul>
+<li><code>q_a_proj</code>: <code>(hidden_size, q_lora_rank)</code>, 即 $(d, d_c^{\prime})$. 这个权重对应的就是公式中的 $W^{DQ} \in \mathbb{R}^{d \times d_c^{\prime}}$, 将输入 $\mathbf{h}_t$ 映射为低秩压缩后的 $\mathbf{c}_t^Q$</li>
+<li><code>q_b_proj</code>:  <code>(q_lora_rank, num_heads * q_head_dim)</code>, 即 $(d_c^{\prime}, n_h \times (d_h + d_h^R))$, 对应的权重为 $W^{UQ} \in \mathbb{R}^{n_h d_h \times d_c^{\prime}}$ 和 $W^{QR} \in \mathbb{R}^{n_h d_h \times d_h^{R}}$, 两个权重分别将低秩压缩后的 $\mathbf{c}_t^Q$ 转化为每个 heads 中不同的两种 queries 成分, 部分经过 RoPE 后再拼接得到最终的 queries</li>
+<li><code>kv_a_proj_with_mqa</code>: <code>(hidden_size, kv_lora_rank + qk_rope_head_dim)</code>, 即 $(d, d_c + d_h^R)$, 对应的权重为 $W^{DKV} \in \mathbb{R}^{d \times d_c}$ 和 $W^{KR} \in \mathbb{R}^{d \times d_h^R}$, 两个权重分别将输入 $\mathbf{h}_t$ 转化为公共的两种 cache, $\mathbf{c}_t^{K V} \in \mathbb{R}^{d_c}$ 和 $\mathbf{k}_t^R \in \mathbb{R}^{d_h^R}$</li>
+<li><code>kv_b_proj</code>: <code>(kv_lora_rank, num_heads * (qk_nope_head_dim + v_head_dim))</code>, 即 $(d_c, n_h \times (d_h + d_h))$, 对应的权重为 $W^{UK} \in \mathbb{R}^{d_c \times n_h d_h}$ 和 $W^{UV} \in \mathbb{R}^{d_c \times n_h d_h}$, 其中 $W^{UK}$ 是将不进行 RoPE 的 keys 部分还原出来, 作为每个 heads 中的 keys 的一部分成分, 与上面得到的 $\mathbf{k}_t^R$ 拼接得到最终的 keys; $W^{UV}$ 是将 KV cache 中的 values 还原出来 使用到的矩阵
+相比于 MHA 用到的三个 $(d, n_h d_h)$ 矩阵, 将输入 $\mathbf{h}_t$ 转换成 queries, keys, values, 由于降秩压缩的存在, attention 结构的参数量有减少.</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="bp">self</span><span class="o">.</span><span class="n">hidden_size</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">hidden_size</span>  <span class="c1"># 5120</span>
+</span></span><span class="line"><span class="cl"><span class="bp">self</span><span class="o">.</span><span class="n">num_heads</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">num_attention_heads</span>  <span class="c1"># 128</span>
+</span></span><span class="line"><span class="cl"><span class="bp">self</span><span class="o">.</span><span class="n">q_lora_rank</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">q_lora_rank</span>  <span class="c1"># 1536</span>
+</span></span><span class="line"><span class="cl"><span class="bp">self</span><span class="o">.</span><span class="n">qk_rope_head_dim</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">qk_rope_head_dim</span>  <span class="c1"># 64</span>
+</span></span><span class="line"><span class="cl"><span class="bp">self</span><span class="o">.</span><span class="n">qk_nope_head_dim</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">qk_nope_head_dim</span>  <span class="c1"># 128</span>
+</span></span><span class="line"><span class="cl"><span class="bp">self</span><span class="o">.</span><span class="n">q_head_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qk_rope_head_dim</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">qk_nope_head_dim</span>  <span class="c1"># 192</span>
+</span></span><span class="line"><span class="cl"><span class="bp">self</span><span class="o">.</span><span class="n">kv_lora_rank</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">kv_lora_rank</span>  <span class="c1"># 512</span>
+</span></span><span class="line"><span class="cl"><span class="bp">self</span><span class="o">.</span><span class="n">v_head_dim</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">v_head_dim</span>  <span class="c1"># 128</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># q_a_proj: (5120, 1536)</span>
+</span></span><span class="line"><span class="cl"><span class="bp">self</span><span class="o">.</span><span class="n">q_a_proj</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">	<span class="bp">self</span><span class="o">.</span><span class="n">hidden_size</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">	<span class="n">config</span><span class="o">.</span><span class="n">q_lora_rank</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">	<span class="n">bias</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">attention_bias</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># q_b_proj: (1536, 128 * 192 = 24576)</span>
+</span></span><span class="line"><span class="cl"><span class="bp">self</span><span class="o">.</span><span class="n">q_b_proj</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">	<span class="n">config</span><span class="o">.</span><span class="n">q_lora_rank</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">	<span class="bp">self</span><span class="o">.</span><span class="n">num_heads</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_head_dim</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">	<span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># kv_a_proj_with_mqa: (5120, 512 + 64 = 576)</span>
+</span></span><span class="line"><span class="cl"><span class="bp">self</span><span class="o">.</span><span class="n">kv_a_proj_with_mqa</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="bp">self</span><span class="o">.</span><span class="n">hidden_size</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">config</span><span class="o">.</span><span class="n">kv_lora_rank</span> <span class="o">+</span> <span class="n">config</span><span class="o">.</span><span class="n">qk_rope_head_dim</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">bias</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">attention_bias</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># kv_b_proj: (512, 128 * (192 - 64 + 128) = 32768)</span>
+</span></span><span class="line"><span class="cl"><span class="bp">self</span><span class="o">.</span><span class="n">kv_b_proj</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="n">config</span><span class="o">.</span><span class="n">kv_lora_rank</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="bp">self</span><span class="o">.</span><span class="n">num_heads</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_head_dim</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">qk_rope_head_dim</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">v_head_dim</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">    <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># o_proj: (128 * 128 = 16384, 5120)</span>
+</span></span><span class="line"><span class="cl"><span class="bp">self</span><span class="o">.</span><span class="n">o_proj</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="bp">self</span><span class="o">.</span><span class="n">num_heads</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">v_head_dim</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="bp">self</span><span class="o">.</span><span class="n">hidden_size</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">bias</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">attention_bias</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>前向传播过程的代码如下, 可以与公式中的过程一一对应.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">  1
+</span><span class="lnt">  2
+</span><span class="lnt">  3
+</span><span class="lnt">  4
+</span><span class="lnt">  5
+</span><span class="lnt">  6
+</span><span class="lnt">  7
+</span><span class="lnt">  8
+</span><span class="lnt">  9
+</span><span class="lnt"> 10
+</span><span class="lnt"> 11
+</span><span class="lnt"> 12
+</span><span class="lnt"> 13
+</span><span class="lnt"> 14
+</span><span class="lnt"> 15
+</span><span class="lnt"> 16
+</span><span class="lnt"> 17
+</span><span class="lnt"> 18
+</span><span class="lnt"> 19
+</span><span class="lnt"> 20
+</span><span class="lnt"> 21
+</span><span class="lnt"> 22
+</span><span class="lnt"> 23
+</span><span class="lnt"> 24
+</span><span class="lnt"> 25
+</span><span class="lnt"> 26
+</span><span class="lnt"> 27
+</span><span class="lnt"> 28
+</span><span class="lnt"> 29
+</span><span class="lnt"> 30
+</span><span class="lnt"> 31
+</span><span class="lnt"> 32
+</span><span class="lnt"> 33
+</span><span class="lnt"> 34
+</span><span class="lnt"> 35
+</span><span class="lnt"> 36
+</span><span class="lnt"> 37
+</span><span class="lnt"> 38
+</span><span class="lnt"> 39
+</span><span class="lnt"> 40
+</span><span class="lnt"> 41
+</span><span class="lnt"> 42
+</span><span class="lnt"> 43
+</span><span class="lnt"> 44
+</span><span class="lnt"> 45
+</span><span class="lnt"> 46
+</span><span class="lnt"> 47
+</span><span class="lnt"> 48
+</span><span class="lnt"> 49
+</span><span class="lnt"> 50
+</span><span class="lnt"> 51
+</span><span class="lnt"> 52
+</span><span class="lnt"> 53
+</span><span class="lnt"> 54
+</span><span class="lnt"> 55
+</span><span class="lnt"> 56
+</span><span class="lnt"> 57
+</span><span class="lnt"> 58
+</span><span class="lnt"> 59
+</span><span class="lnt"> 60
+</span><span class="lnt"> 61
+</span><span class="lnt"> 62
+</span><span class="lnt"> 63
+</span><span class="lnt"> 64
+</span><span class="lnt"> 65
+</span><span class="lnt"> 66
+</span><span class="lnt"> 67
+</span><span class="lnt"> 68
+</span><span class="lnt"> 69
+</span><span class="lnt"> 70
+</span><span class="lnt"> 71
+</span><span class="lnt"> 72
+</span><span class="lnt"> 73
+</span><span class="lnt"> 74
+</span><span class="lnt"> 75
+</span><span class="lnt"> 76
+</span><span class="lnt"> 77
+</span><span class="lnt"> 78
+</span><span class="lnt"> 79
+</span><span class="lnt"> 80
+</span><span class="lnt"> 81
+</span><span class="lnt"> 82
+</span><span class="lnt"> 83
+</span><span class="lnt"> 84
+</span><span class="lnt"> 85
+</span><span class="lnt"> 86
+</span><span class="lnt"> 87
+</span><span class="lnt"> 88
+</span><span class="lnt"> 89
+</span><span class="lnt"> 90
+</span><span class="lnt"> 91
+</span><span class="lnt"> 92
+</span><span class="lnt"> 93
+</span><span class="lnt"> 94
+</span><span class="lnt"> 95
+</span><span class="lnt"> 96
+</span><span class="lnt"> 97
+</span><span class="lnt"> 98
+</span><span class="lnt"> 99
+</span><span class="lnt">100
+</span><span class="lnt">101
+</span><span class="lnt">102
+</span><span class="lnt">103
+</span><span class="lnt">104
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="s2">&#34;&#34;&#34;queries 的处理&#34;&#34;&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># t1: hidden_states: (b, s, 5120)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># t2: self.q_a_proj(hidden_states): (b, s, 1536)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># t3: self.q_a_layernorm(t2): (b, s, 1536)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># q: t4: self.q_b_proj(t3): (b, s, 128 * 192)</span>
+</span></span><span class="line"><span class="cl"><span class="n">q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_b_proj</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_a_layernorm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_a_proj</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)))</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># t1: q: (b, s, 128 * 192)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># t2: q.view: (b, s, 128, 192)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># q: t3: t2.transpose(1, 2): (b, 128, s, 192 = (128 + 64))</span>
+</span></span><span class="line"><span class="cl"><span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">bsz</span><span class="p">,</span> <span class="n">q_len</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_head_dim</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># q_nope: (b, 128, s, 128)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># q_pe: (b, 128, s, 64)</span>
+</span></span><span class="line"><span class="cl"><span class="n">q_nope</span><span class="p">,</span> <span class="n">q_pe</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="n">q</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">qk_nope_head_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qk_rope_head_dim</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="s2">&#34;&#34;&#34;keys and values 的处理&#34;&#34;&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># t1: hidden_states: (b, s, 5120)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># compressed_kv: t2: self.kv_a_proj_with_mqa(t1): (b, s, 576 = 512 + 64)</span>
+</span></span><span class="line"><span class="cl"><span class="n">compressed_kv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kv_a_proj_with_mqa</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># compressed_kv: (b, s, 512)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># k_pe: (b, s, 64)</span>
+</span></span><span class="line"><span class="cl"><span class="n">compressed_kv</span><span class="p">,</span> <span class="n">k_pe</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="n">compressed_kv</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">kv_lora_rank</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qk_rope_head_dim</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># t1: k_pe: (b, s, 64)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># t2: k_pe.view: (b, s, 1, 64)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># k_pe: t2.transpose(1, 2): (b, 1, s, 64)</span>
+</span></span><span class="line"><span class="cl"><span class="n">k_pe</span> <span class="o">=</span> <span class="n">k_pe</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">bsz</span><span class="p">,</span> <span class="n">q_len</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qk_rope_head_dim</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># t1: compressed_kv: (b, s, 512)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># t2: self.kv_a_layernorm(t1): (b, s, 512)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># t3: self.kv_b_proj(t2): (b, s, 128 * (128 + 128))</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># t4: t3.view: (b, s, 128, 128 + 128)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># kv: t5: t4.transpose(1, 2): (b, 128, s, 128 + 128)</span>
+</span></span><span class="line"><span class="cl"><span class="n">kv</span> <span class="o">=</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="bp">self</span><span class="o">.</span><span class="n">kv_b_proj</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kv_a_layernorm</span><span class="p">(</span><span class="n">compressed_kv</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">    <span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">bsz</span><span class="p">,</span> <span class="n">q_len</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qk_nope_head_dim</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">v_head_dim</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="s2">&#34;&#34;&#34;对部分 queries 和 keys 施加 RoPE&#34;&#34;&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># k_nope: (b, 128, s, 128)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># value_states: (b, 128, s, 128)</span>
+</span></span><span class="line"><span class="cl"><span class="n">k_nope</span><span class="p">,</span> <span class="n">value_states</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="n">kv</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">qk_nope_head_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">v_head_dim</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># kv_seq_len: s</span>
+</span></span><span class="line"><span class="cl"><span class="n">kv_seq_len</span> <span class="o">=</span> <span class="n">value_states</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="n">cos</span><span class="p">,</span> <span class="n">sin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rotary_emb</span><span class="p">(</span><span class="n">value_states</span><span class="p">,</span> <span class="n">seq_len</span><span class="o">=</span><span class="n">kv_seq_len</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># q_pe: (b, 128, s, 64)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># k_pe: (b, 1, s, 64)</span>
+</span></span><span class="line"><span class="cl"><span class="n">q_pe</span><span class="p">,</span> <span class="n">k_pe</span> <span class="o">=</span> <span class="n">apply_rotary_pos_emb</span><span class="p">(</span><span class="n">q_pe</span><span class="p">,</span> <span class="n">k_pe</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="n">sin</span><span class="p">,</span> <span class="n">position_ids</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="s2">&#34;&#34;&#34;将经过 RoPE 的 queries 和 keys 分别于不需要经过 RoPE 的部分拼接
+</span></span></span><span class="line"><span class="cl"><span class="s2">得到新的 queries 和 keys
+</span></span></span><span class="line"><span class="cl"><span class="s2">&#34;&#34;&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># query_states: (b, 128, s, 128 + 64)</span>
+</span></span><span class="line"><span class="cl"><span class="n">query_states</span> <span class="o">=</span> <span class="n">k_pe</span><span class="o">.</span><span class="n">new_empty</span><span class="p">(</span><span class="n">bsz</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_heads</span><span class="p">,</span> <span class="n">q_len</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_head_dim</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># query_states 的 (b, 128, s, :128) 部分拼接不需要进行 rope 的部分</span>
+</span></span><span class="line"><span class="cl"><span class="n">query_states</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">qk_nope_head_dim</span><span class="p">]</span> <span class="o">=</span> <span class="n">q_nope</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># query_states 的 (b, 128, s, 128:) 部分拼接进行了 rope 的部分</span>
+</span></span><span class="line"><span class="cl"><span class="n">query_states</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qk_nope_head_dim</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">q_pe</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># key_states: (b, 128, s, 128 + 64)</span>
+</span></span><span class="line"><span class="cl"><span class="n">key_states</span> <span class="o">=</span> <span class="n">k_pe</span><span class="o">.</span><span class="n">new_empty</span><span class="p">(</span><span class="n">bsz</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_heads</span><span class="p">,</span> <span class="n">q_len</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_head_dim</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># key_states 的 (b, 128, s, :128) 部分拼接不需要进行 rope 的部分</span>
+</span></span><span class="line"><span class="cl"><span class="n">key_states</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">qk_nope_head_dim</span><span class="p">]</span> <span class="o">=</span> <span class="n">k_nope</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># key_states 的 (b, 128, s, 128:) 部分拼接进行了 rope 的部分</span>
+</span></span><span class="line"><span class="cl"><span class="n">key_states</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qk_nope_head_dim</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">k_pe</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="s2">&#34;&#34;&#34;计算 attention&#34;&#34;&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># t1: query_states: (b, 128, s, 192)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># t2: key_states.transpose(2, 3): (b, 128, 192, s)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># attn_weights: matmul(t1, t2): (b, 128, s, s)</span>
+</span></span><span class="line"><span class="cl"><span class="n">attn_weights</span> <span class="o">=</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">query_states</span><span class="p">,</span> <span class="n">key_states</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">softmax_scale</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># 计算 attention softmax 时 upcast 到 fp32</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># attn_weights: (b, 128, s, s)</span>
+</span></span><span class="line"><span class="cl"><span class="n">attn_weights</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="n">attn_weights</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">query_states</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">attn_weights</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="n">attn_weights</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">attention_dropout</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">training</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="s2">&#34;&#34;&#34;得到最终的输出&#34;&#34;&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># t1: attn_weights: (b, 128, s, s)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># t2: value_states: (b, 128, s, 128)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># attn_output: matmul(t1, t2): (b, 128, s, 128)</span>
+</span></span><span class="line"><span class="cl"><span class="n">attn_output</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">attn_weights</span><span class="p">,</span> <span class="n">value_states</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># t1: attn_output: (b, 128, s, 128)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># attn_output: t2: t1.transpose(1, 2): (b, s, 128, 128)</span>
+</span></span><span class="line"><span class="cl"><span class="n">attn_output</span> <span class="o">=</span> <span class="n">attn_output</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># t1: attn_output: (b, s, 128, 128)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># attn_output: t2: t1.reshape: (b, s, 128 * 128)</span>
+</span></span><span class="line"><span class="cl"><span class="n">attn_output</span> <span class="o">=</span> <span class="n">attn_output</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">bsz</span><span class="p">,</span> <span class="n">q_len</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_heads</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">v_head_dim</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># t1: attn_output: (b, s, 128 * 128)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># attn_output: self.o_proj(t1): (b, s, 5120)</span>
+</span></span><span class="line"><span class="cl"><span class="n">attn_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">o_proj</span><span class="p">(</span><span class="n">attn_output</span><span class="p">)</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="moe">MoE
+</h2><p>在 FFN 层中, 使用了 DeepSeekMoE 结构. DeepSeekMoE 中将 experts 划分为了两类:</p>
+<ul>
+<li>Routed Expert: 这部分专家负责更准确地获取专业知识</li>
+<li>Shared Expert: 这部分专家负责减少 Routed Expert 之间的知识冗余情况</li>
+</ul>
+<p>对于每一个 token, 所有的 Shared Expert 都会被激活, 除此之外再根据 gate 选择 TopK 的 Routed Expert 激活, 将这些专家的输出汇总得到这个 token 最终的输出. 整个过程如下图所示.</p>
+<p><img src="https://cdn.jsdelivr.net/gh/pixelock/notebook-images/images/20240510160530.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p>$$
+\begin{aligned}
+&amp; \mathbf{h}<em>t^{\prime}=\mathbf{u}<em>t+\sum</em>{i=1}^{N_s} \operatorname{FFN}<em>i^{(s)}\left(\mathbf{u}<em>t\right)+\sum</em>{i=1}^{N_r} g</em>{i, t} \operatorname{FFN}<em>i^{(r)}\left(\mathbf{u}<em>t\right), \
+&amp; g</em>{i, t}= \begin{cases}s</em>{i, t}, &amp; s</em>{i, t} \in \operatorname{Topk}\left(\left{s_{j, t} \mid 1 \leqslant j \leqslant N_r\right}, K_r\right), \
+0, \quad \text { otherwise, }\end{cases} \
+&amp; s_{i, t}=\operatorname{Softmax}_i\left(\mathbf{u}_t^T \mathbf{e}_i\right),
+\end{aligned}
+$$</p>
+<p>公式化表述:</p>
+<p>$\mathbf{u}_t$ 是第 $t$ 个 token 的 FFN 输入, $N_s$ 和 $N_r$ 分别代表 Shared Expert 和 Routed Expert 的数量, $\operatorname{FFN}_i^{(s)}(\cdot)$ 和 $\operatorname{FFN}_i^{(r)}(\cdot)$ 分别代表了第 $i$ Shared Expert 和第 $i$ 个 Routed Expert.</p>
+<p>$K_r$ 代表了要激活几个 Routed Expert. $g_{i,t}$ 代表了第 $i$ 个 Routed Expert 对应的 gate value.</p>
+<p>$s_{i,t}$ 代表了当前第 $t$ 个 token 对第 $i$ 个 Routed Expert 的倾向程度, 由每个 Routed Expert 对应的 softmax 得到. $\mathbf{e}_i$ 是这层中第 $i$ 个 Routed Expert 对应的 centroid 向量.</p>
+<p>最后将选择出的 TopK Routed Expert 乘上对应的 $g_{i,t}$ gate value 作为权重, 再加上所有 Shared Expert 的输入, 以及原始输入 $\mathbf{u}_t$, 得到第 $t$ 个 token 的最终输出 $\mathbf{h}_t^{\prime}$.</p>
+<p>在开源的 <a class="link" href="https://huggingface.co/deepseek-ai/DeepSeek-V2"  target="_blank" rel="noopener"
+    >DeepSeek-V2</a> 模型中的 <a class="link" href="https://huggingface.co/deepseek-ai/DeepSeek-V2/blob/main/config.json"  target="_blank" rel="noopener"
+    >config</a> 中对应的 Routed Expert <code>n_routed_experts</code> 数量为 160, 选取 <code>num_experts_per_tok</code> TopK $K_r = 6$; Shared Expert 的数量 <code>n_shared_experts</code> 为 2.</p>
+<h3 id="代码-1">代码
+</h3><p>其中还是有很多细节, 需要代码阐释. 首先是 MoE 的整体是怎么定义的. 其中通过 <code>config.ep_size</code> 的配置定义了 expert parallel 的数量, 即针对 expert 是否并行计算, DeepSeekMoE 结构进行了专门的优化.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">DeepseekV2MoE</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;&#34;&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s2">    A mixed expert module containing shared experts.
+</span></span></span><span class="line"><span class="cl"><span class="s2">    &#34;&#34;&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">num_experts_per_tok</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">num_experts_per_tok</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&#34;ep_size&#34;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">config</span><span class="o">.</span><span class="n">ep_size</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="o">...</span>
+</span></span><span class="line"><span class="cl">        <span class="k">else</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="o">...</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>我们只看非并行部分, 作为理解. <code>num_experts_per_tok</code> 定义了每个 token 用几个 router expert. Router experts 中实际上为一个个 <code>DeepseekV2MLP</code>, 这个就是使用了 SwiGLU 激活函数的 MLP 结构.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&#34;ep_size&#34;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">config</span><span class="o">.</span><span class="n">ep_size</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="o">...</span>
+</span></span><span class="line"><span class="cl"><span class="k">else</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">	<span class="bp">self</span><span class="o">.</span><span class="n">ep_size</span> <span class="o">=</span> <span class="mi">1</span>
+</span></span><span class="line"><span class="cl">	<span class="bp">self</span><span class="o">.</span><span class="n">experts_per_rank</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">n_routed_experts</span>
+</span></span><span class="line"><span class="cl">	<span class="bp">self</span><span class="o">.</span><span class="n">ep_rank</span> <span class="o">=</span> <span class="mi">0</span>
+</span></span><span class="line"><span class="cl">	<span class="bp">self</span><span class="o">.</span><span class="n">experts</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">		<span class="p">[</span>
+</span></span><span class="line"><span class="cl">			<span class="n">DeepseekV2MLP</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">intermediate_size</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">moe_intermediate_size</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">			<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">n_routed_experts</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="p">]</span>
+</span></span><span class="line"><span class="cl">	<span class="p">)</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>然后定义了 MoE 需要的 Gate 结构, 后面展开. 然后定义了 Shared experts. 可以看到是使用了一个大的 <code>DeepseekV2MLP</code> 结构作为所有 Shared experts 的汇总. 如果 shared experts 的数量增加, MLP 结构的 <code>intermediate_size</code> 会成比例的增大.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="bp">self</span><span class="o">.</span><span class="n">gate</span> <span class="o">=</span> <span class="n">MoEGate</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">n_shared_experts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">	<span class="n">intermediate_size</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">moe_intermediate_size</span> <span class="o">*</span> <span class="n">config</span><span class="o">.</span><span class="n">n_shared_experts</span>
+</span></span><span class="line"><span class="cl">	<span class="bp">self</span><span class="o">.</span><span class="n">shared_experts</span> <span class="o">=</span> <span class="n">DeepseekV2MLP</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">		<span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">intermediate_size</span><span class="o">=</span><span class="n">intermediate_size</span>
+</span></span><span class="line"><span class="cl">	<span class="p">)</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>计算过程. 首先接收 <code>hidden_states</code> 作为输入. 将输入传入到 gate 结构中, 得到 topK router experts 对应的 index <code>topk_idx</code>, 以及对应的权重分数 <code>topk_weight</code>.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hidden_states</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">	<span class="n">identity</span> <span class="o">=</span> <span class="n">hidden_states</span>
+</span></span><span class="line"><span class="cl">	<span class="n">orig_shape</span> <span class="o">=</span> <span class="n">hidden_states</span><span class="o">.</span><span class="n">shape</span>
+</span></span><span class="line"><span class="cl">	<span class="n">topk_idx</span><span class="p">,</span> <span class="n">topk_weight</span><span class="p">,</span> <span class="n">aux_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gate</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="moegate">MoEGate
+</h4><p>在 MoEGate 中, 一个 batch 内, 每个样本中的每个 token 都会选择出它对应的 topk 的 router experts. MoEGate 初始化, 声明了一个可训练的 centroid 参数矩阵 <code>weight</code>, 每个 router expert 对应一个向量, 因此 centroid 矩阵的大小为 <code>(n_routed_experts, gating_dim)</code>, <code>gating_dim</code> 实际上为 <code>hidden_size</code> 大小.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">MoEGate</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">top_k</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">num_experts_per_tok</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">n_routed_experts</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">n_routed_experts</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">routed_scaling_factor</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">routed_scaling_factor</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">scoring_func</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">scoring_func</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">aux_loss_alpha</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">seq_aux</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">seq_aux</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">topk_method</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">topk_method</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">n_group</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">n_group</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">topk_group</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">topk_group</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="c1"># topk selection algorithm</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">norm_topk_prob</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">norm_topk_prob</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">gating_dim</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">hidden_size</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">weight</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">            <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_routed_experts</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gating_dim</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">        <span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">reset_parameters</span><span class="p">()</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>在前向传播阶段, 输入 <code>hidden_states</code> 为 <code>(b, s, hidden_size)</code>, 将输入通过 <code>weight</code> 映射为 <code>(b, s, n_routed_experts)</code>, 即 batch 内, 每个样本中的每个 token 对应在所有 router expert 的 logits 分数, 之后进行 softmax 得到归一化的分数.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hidden_states</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">bsz</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">hidden_states</span><span class="o">.</span><span class="n">shape</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">### compute gating score</span>
+</span></span><span class="line"><span class="cl">    <span class="n">hidden_states</span> <span class="o">=</span> <span class="n">hidden_states</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">logits</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">linear</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">        <span class="n">hidden_states</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="kc">None</span>
+</span></span><span class="line"><span class="cl">    <span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scoring_func</span> <span class="o">==</span> <span class="s2">&#34;softmax&#34;</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="n">scores</span> <span class="o">=</span> <span class="n">logits</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">else</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">            <span class="sa">f</span><span class="s2">&#34;insupportable scoring function for MoE gating: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scoring_func</span><span class="si">}</span><span class="s2">&#34;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">)</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>之后挑选出 topk 的 experts 和对应的分数. 这里有两种策略: <code>gready</code> 和 <code>group_limited_greedy</code>. <code>gready</code> 的方法很简单, 直接使用 <code>topk</code> 函数, 选出 batch 内每个 token 对应的 topk index 以及对应的分数 <code>topk_idx</code> 和 <code>topk_weight</code>, 两个张量的维度为 <code>(b, s, top_k)</code>.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="c1">### select top-k experts</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">topk_method</span> <span class="o">==</span> <span class="s2">&#34;gready&#34;</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">	<span class="n">topk_weight</span><span class="p">,</span> <span class="n">topk_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">topk</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">		<span class="n">scores</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">top_k</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">sorted</span><span class="o">=</span><span class="kc">False</span>
+</span></span><span class="line"><span class="cl">	<span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">topk_method</span> <span class="o">==</span> <span class="s2">&#34;group_limited_greedy&#34;</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">	<span class="o">...</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>而根据配置文件, deepseek-v2 默认的方法为 <code>group_limited_greedy</code>. 在这种方法下, router experts 不再是完全平等竞争, 而是分成了几组, 首先每个组选出代表, 组间进行竞争, 淘汰点所有落后组及其对应的 experts, 再在剩余的组中选择出 topk 的 experts. 在 DeepSeek-V2 的 <a class="link" href="https://huggingface.co/deepseek-ai/DeepSeek-V2/blob/main/config.json"  target="_blank" rel="noopener"
+    >config</a> 中, 分成了 <code>n_group = 8</code> 组, 总共要选出 <code>topk_group = 3</code> 个组, 然后在这 3 个组的所有 experts 中选举组最优的 <code>num_experts_per_tok = 6</code> 个 experts.</p>
+<p>分组的方法, 是将最后一维 <code>n_routed_experts</code> 通过 <code>view</code> 方法转换成 <code>(n_group, n_routed_experts // n_group)</code>, 并且将 <code>(b, s)</code> 碾平, 记 <code>b * s = n</code>. 首先得到每个 token 每个 group 的最大分数 <code>group_scores: (n, n_group)</code>.</p>
+<p>然后根据分数, 选取每个 token 对应的 topk 个组的 index <code>group_idx: (n, topk_group)</code>.</p>
+<p>然后根据得到的 index 创建 group 的 mask 矩阵, 矩阵的大小为 <code>(n, n_group)</code>, 值为 1 代表这个 group 是被选择为 top group 的组, 为 0 代表非 top group, 后面不再使用. 这一步是通过 <code>scatter_</code> 方法实现的, 得到 <code>group_mask: (n, n_group)</code>.</p>
+<p>之后, 要根据得到的 top group, 将这些组内所有的 expert 选择出来, 后面在做比较. 方法是根据得到的 <code>group_mask</code> 得到所有 expert 对应的 expert mask, 这里是 <code>score_mask: (n, n_routed_experts)</code>. 方法是将 <code>group_mask</code> 扩展 <code>n_routed_experts // n_group</code> 遍, 这样 <code>group_mask</code> 的值就映射到了组内所有的 expert 上, 然后将 mask 矩阵的形状调整为需要的形式. 使用了 <code>unsqueeze</code>, <code>expand</code>, <code>reshape</code> 方法.</p>
+<p>得到了 expert mask 之后, 将这个 mask 矩阵覆盖到之前得到的每个 expert 的分数, 挑选出 top group 对应的所有 experts, 在选出这其中的 topk 个 experts.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">topk_method</span> <span class="o">==</span> <span class="s2">&#34;group_limited_greedy&#34;</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">	<span class="n">group_scores</span> <span class="o">=</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">		<span class="n">scores</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">bsz</span> <span class="o">*</span> <span class="n">seq_len</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_group</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+</span></span><span class="line"><span class="cl">	<span class="p">)</span>  <span class="c1"># [n, n_group]</span>
+</span></span><span class="line"><span class="cl">	<span class="n">group_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">topk</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">		<span class="n">group_scores</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">topk_group</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">sorted</span><span class="o">=</span><span class="kc">False</span>
+</span></span><span class="line"><span class="cl">	<span class="p">)[</span>
+</span></span><span class="line"><span class="cl">		<span class="mi">1</span>
+</span></span><span class="line"><span class="cl">	<span class="p">]</span>  <span class="c1"># [n, top_k_group]</span>
+</span></span><span class="line"><span class="cl">	<span class="n">group_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">group_scores</span><span class="p">)</span>  <span class="c1"># [n, n_group]</span>
+</span></span><span class="line"><span class="cl">	<span class="n">group_mask</span><span class="o">.</span><span class="n">scatter_</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">group_idx</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># [n, n_group]</span>
+</span></span><span class="line"><span class="cl">	<span class="n">score_mask</span> <span class="o">=</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">		<span class="n">group_mask</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="o">.</span><span class="n">expand</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">			<span class="n">bsz</span> <span class="o">*</span> <span class="n">seq_len</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_group</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_routed_experts</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_group</span>
+</span></span><span class="line"><span class="cl">		<span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">bsz</span> <span class="o">*</span> <span class="n">seq_len</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">)</span>  <span class="c1"># [n, e]</span>
+</span></span><span class="line"><span class="cl">	<span class="n">tmp_scores</span> <span class="o">=</span> <span class="n">scores</span><span class="o">.</span><span class="n">masked_fill</span><span class="p">(</span><span class="o">~</span><span class="n">score_mask</span><span class="o">.</span><span class="n">bool</span><span class="p">(),</span> <span class="mf">0.0</span><span class="p">)</span>  <span class="c1"># [n, e]</span>
+</span></span><span class="line"><span class="cl">	<span class="n">topk_weight</span><span class="p">,</span> <span class="n">topk_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">topk</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">		<span class="n">tmp_scores</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">top_k</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">sorted</span><span class="o">=</span><span class="kc">False</span>
+</span></span><span class="line"><span class="cl">	<span class="p">)</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>将 topk 对应的 weights 进行归一化调整.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="c1">### norm gate to sum 1</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">top_k</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_topk_prob</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">	<span class="n">denominator</span> <span class="o">=</span> <span class="n">topk_weight</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-20</span>
+</span></span><span class="line"><span class="cl">	<span class="n">topk_weight</span> <span class="o">=</span> <span class="n">topk_weight</span> <span class="o">/</span> <span class="n">denominator</span>
+</span></span><span class="line"><span class="cl"><span class="k">else</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">	<span class="n">topk_weight</span> <span class="o">=</span> <span class="n">topk_weight</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">routed_scaling_factor</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>接下来, DeepSeek-V2 引入了 Expert-Level Balance Loss 的概念, 用在训练阶段, 目的是避免 routing collapse 现象, 即所有 tokens 只激活一部分 experts, 另外一部分 experts 很少被激活, 导致参数效率低下.</p>
+<p>Expert-Level Balance Loss 的定义为</p>
+<p>$$
+\begin{aligned}
+\mathcal{L}<em>{\mathrm{ExpBal}}&amp; =\alpha</em>{1}\sum_{i=1}^{N_{r}}f_{i}P_{i},  \
+&amp;f_{i} =\frac{N_{r}}{K_{r}T}\sum_{t=1}^{T}\mathbb{1}(\mathrm{Token~}t\mathrm{~selects~Expert~}i),  \
+&amp;P_{i} =\frac{1}{T}\sum_{t=1}^{T}s_{i,t},
+\end{aligned}
+$$</p>
+<p>$s_{i,t}$ 代表的就是第 $i$ 个 router expert 在第 $t$ 个 token 上的分数, 将所有 token 的分数平均, 得到这个 expert 对应的分数 $P_i$. $f_i$ 是第 $i$ 个 expert 对应的 loss 权重, 与 batch 内有多少个 token 激活了这个 expert 相关, 越多的 tokens 选择这个 expert, 则这个 expert 产生的 loss 越大.</p>
+<p>最后将分数 $P_i$ 和权重 $f_i$ 乘在一起, expert 的得分越高, 或者这个选择 expert 的 tokens 越多, 说明这个 expert 越有被偏向的风险. 通过 Expert-Level Balance Loss 这个正则项, 来缓解这个问题.</p>
+<p>$\alpha_1$ 是这个 loss 的平衡参数.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="c1">### expert-level computation auxiliary loss</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">	<span class="n">scores_for_aux</span> <span class="o">=</span> <span class="n">scores</span>
+</span></span><span class="line"><span class="cl">	<span class="n">aux_topk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">top_k</span>
+</span></span><span class="line"><span class="cl">	<span class="c1"># always compute aux loss based on the naive greedy topk method</span>
+</span></span><span class="line"><span class="cl">	<span class="n">topk_idx_for_aux_loss</span> <span class="o">=</span> <span class="n">topk_idx</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">bsz</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">seq_aux</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">		<span class="n">scores_for_seq_aux</span> <span class="o">=</span> <span class="n">scores_for_aux</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">bsz</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="n">ce</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">			<span class="n">bsz</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_routed_experts</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">hidden_states</span><span class="o">.</span><span class="n">device</span>
+</span></span><span class="line"><span class="cl">		<span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="n">ce</span><span class="o">.</span><span class="n">scatter_add_</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">			<span class="mi">1</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">			<span class="n">topk_idx_for_aux_loss</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">			<span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">bsz</span><span class="p">,</span> <span class="n">seq_len</span> <span class="o">*</span> <span class="n">aux_topk</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">hidden_states</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">		<span class="p">)</span><span class="o">.</span><span class="n">div_</span><span class="p">(</span><span class="n">seq_len</span> <span class="o">*</span> <span class="n">aux_topk</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_routed_experts</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="n">aux_loss</span> <span class="o">=</span> <span class="p">(</span><span class="n">ce</span> <span class="o">*</span> <span class="n">scores_for_seq_aux</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">			<span class="n">dim</span><span class="o">=</span><span class="mi">1</span>
+</span></span><span class="line"><span class="cl">		<span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span>
+</span></span><span class="line"><span class="cl">	<span class="k">else</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">		<span class="n">mask_ce</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">one_hot</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">			<span class="n">topk_idx_for_aux_loss</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">num_classes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_routed_experts</span>
+</span></span><span class="line"><span class="cl">		<span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="n">ce</span> <span class="o">=</span> <span class="n">mask_ce</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="n">Pi</span> <span class="o">=</span> <span class="n">scores_for_aux</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="n">fi</span> <span class="o">=</span> <span class="n">ce</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_routed_experts</span>
+</span></span><span class="line"><span class="cl">		<span class="n">aux_loss</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pi</span> <span class="o">*</span> <span class="n">fi</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span>
+</span></span><span class="line"><span class="cl"><span class="k">else</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">	<span class="n">aux_loss</span> <span class="o">=</span> <span class="kc">None</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="moe-forward">MoE forward
+</h4><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hidden_states</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">	<span class="n">identity</span> <span class="o">=</span> <span class="n">hidden_states</span>
+</span></span><span class="line"><span class="cl">	<span class="n">orig_shape</span> <span class="o">=</span> <span class="n">hidden_states</span><span class="o">.</span><span class="n">shape</span>
+</span></span><span class="line"><span class="cl">	<span class="n">topk_idx</span><span class="p">,</span> <span class="n">topk_weight</span><span class="p">,</span> <span class="n">aux_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gate</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">hidden_states</span> <span class="o">=</span> <span class="n">hidden_states</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">hidden_states</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+</span></span><span class="line"><span class="cl">	<span class="n">flat_topk_idx</span> <span class="o">=</span> <span class="n">topk_idx</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">	    <span class="o">...</span>
+</span></span><span class="line"><span class="cl">	<span class="k">else</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">	    <span class="o">...</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">n_shared_experts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">		<span class="n">y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">shared_experts</span><span class="p">(</span><span class="n">identity</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="n">y</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>接下来产生了训练阶段和推理阶段的分歧. 首先看训练阶段.</p>
+<p><code>hidden_states</code> 转换为 <code>(b * s, hidden_size)</code>. 首先将其重复 <code>num_experts_per_tok</code> 次, 得到 <code>(b * s * num_experts_per_tok, hidden_size)</code>. <code>flat_topk_idx: (b * s * num_experts_per_tok,)</code> 由 <code>topk_idx</code> 转换得来.</p>
+<p>MoE 结构最后的输出形状与输入 <code>hidden_states</code> 一样, 这里先创建一个空的最终输出 <code>y: (b * s * num_experts_per_tok, hidden_size)</code>. 然后遍历每个 router expert:</p>
+<ul>
+<li><code>flat_topk_idx == i</code> 选择出所有激活这个 expert 的索引, 记为 <code>t1</code></li>
+<li>由于 <code>flat_topk_idx</code> 的大小为 <code>b * s * num_experts_per_tok</code>, <code>hidden_states</code> 的第一个维度也是 <code>b * s * num_experts_per_tok</code>, 所以通过 <code>hidden_states[t1]</code> 可以选择出需要进入到这个 expert 中所有 token 对应输入的拼接, 记为 <code>t2</code></li>
+<li>将选择出的 <code>t2</code> 输入到对应的 expert, 其实就是一个 MLP 层, 得到对应的输出, 按照对应的位置放置到对应的位置: <code>y[flat_topk_idx == i] = expert(t2)</code></li>
+</ul>
+<p>循环完所有的 expert, 就得到了所有 token 选择的 expert 的输出 <code>y: (b * s * num_experts_per_tok, hidden_size)</code>.</p>
+<p>每个 token 对应的 MoE 输出, 是加权汇总所有 top router expert 的输出, 汇总的权重是 MoEGate 输出的权重分数 <code>topk_weight: (b * s, num_experts_per_tok)</code>, 将 <code>y</code> 与 <code>topk_weight</code> 相乘, 并 <code>sum</code> 就得到了每个 token 的 MoE 输出. 再经过形状的变换, 得到输出 <code>y: (b, s, hidden_size)</code>.</p>
+<p>这里的 <code>AddAuxiliaryLoss</code> 是将 MoEGate 计算出的 Expert-Level Balance Loss 通过特殊的 trick 注册到计算过程中.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">	<span class="n">hidden_states</span> <span class="o">=</span> <span class="n">hidden_states</span><span class="o">.</span><span class="n">repeat_interleave</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">		<span class="bp">self</span><span class="o">.</span><span class="n">num_experts_per_tok</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span>
+</span></span><span class="line"><span class="cl">	<span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">expert</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experts</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">		<span class="n">y</span><span class="p">[</span><span class="n">flat_topk_idx</span> <span class="o">==</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">expert</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">[</span><span class="n">flat_topk_idx</span> <span class="o">==</span> <span class="n">i</span><span class="p">])</span>
+</span></span><span class="line"><span class="cl">	<span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">topk_weight</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">topk_weight</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">orig_shape</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">y</span> <span class="o">=</span> <span class="n">AddAuxiliaryLoss</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">aux_loss</span><span class="p">)</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>再看推理阶段.</p>
+<p>首先统计每个 expert 有多少个 tokens 选择.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="c1"># (b * s, n_routed_experts)</span>
+</span></span><span class="line"><span class="cl"><span class="n">cnts</span> <span class="o">=</span> <span class="n">topk_ids</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">((</span><span class="n">topk_ids</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experts</span><span class="p">)))</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># (b * s, n_routed_experts)</span>
+</span></span><span class="line"><span class="cl"><span class="n">cnts</span><span class="o">.</span><span class="n">scatter_</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">topk_ids</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># (n_routed_experts,)</span>
+</span></span><span class="line"><span class="cl"><span class="n">tokens_per_expert</span> <span class="o">=</span> <span class="n">cnts</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>然后整合所有 token 选择的 expert 对应的输出, 由于有 <code>b * s</code> 个 token, 每个选择 <code>num_experts_per_tok</code> 个 expert, 因此最终得到一个 <code>(b * s * num_experts_per_tok, hidden_size)</code> 的变量 <code>sorted_tokens</code>.</p>
+<p>为了后续计算的方便, 需要将选择相同的 expert 拼接不同 tokens 在一起. 这里的 trick 是将代表选择的 top index <code>topk_ids</code> 碾平后进行 <code>argsort</code>, 对 <code>argsort</code> 整除 <code>n_routed_experts</code> 就得到了对应的 token index. 这样通过 <code>x[idxs // n_routed_experts]</code> 即完成了选择相同的 expert 的 tokens 输入拼接在一起(index 低的 expert 拼接后排在前).</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="c1"># (b * s * num_experts_per_tok,)</span>
+</span></span><span class="line"><span class="cl"><span class="n">idxs</span> <span class="o">=</span> <span class="n">topk_ids</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># (b * s * num_experts_per_tok, hidden_size)</span>
+</span></span><span class="line"><span class="cl"><span class="n">sorted_tokens</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">idxs</span> <span class="o">//</span> <span class="n">topk_ids</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+</span></span><span class="line"><span class="cl"><span class="n">sorted_tokens_shape</span> <span class="o">=</span> <span class="n">sorted_tokens</span><span class="o">.</span><span class="n">shape</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>循环每个 expert, 首先从 <code>tokens_per_expert</code> 得到这个 expert 对应的激活的 tokens 的数量 <code>num_tokens</code>. 而由于 <code>sorted_tokens</code> 是选择相同的 expert 的 tokens 输入拼接在一起的大的输入矩阵, 且按 expert index 的顺序排列, 低 index 的 expert 排名在 <code>sorted_tokens</code> 的前面. 所以通过 <code>start_idx: start_idx + num_tokens</code> 就可以得到这个 expert 对应的所有 tokens 的输入.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">num_tokens</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tokens_per_expert</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">	<span class="n">end_idx</span> <span class="o">=</span> <span class="n">start_idx</span> <span class="o">+</span> <span class="n">num_tokens</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="n">num_tokens</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">		<span class="k">continue</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>将这部分输入通过 slice 截取出来, 并经过对应的 expert 的 MLP 得到对应的输出.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="n">expert</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">experts</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">ep_rank</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">experts_per_rank</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="n">tokens_for_this_expert</span> <span class="o">=</span> <span class="n">sorted_tokens</span><span class="p">[</span><span class="n">start_idx</span><span class="p">:</span><span class="n">end_idx</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="n">expert_out</span> <span class="o">=</span> <span class="n">expert</span><span class="p">(</span><span class="n">tokens_for_this_expert</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">expert_out</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">start_idx</span> <span class="o">=</span> <span class="n">end_idx</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>循环所有的 expert 后, 将每个 expert 的结果拼接起来, 得到所有 tokens 在其选择的 experts 的所有输出拼接在一起.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="c1"># outs: (b * s * num_experts_per_tok, hidden_size)</span>
+</span></span><span class="line"><span class="cl"><span class="n">outs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span> <span class="k">else</span> <span class="n">sorted_tokens</span><span class="o">.</span><span class="n">new_empty</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>接下来, 要对每个 token 进行汇总, 加权每个 token 在它选择的所有 experts 上的输出. <code>idxs</code> 记录了 token 和 <code>num_experts_per_tok</code> 交叉后的顺序 index, <code>new_x</code> 经过 <code>view</code> 后的形状为 <code>(b * s, num_experts_per_tok, hidden_size)</code>. 在乘上 <code>topk_weight</code> 后, 通过 <code>sum</code> 加权汇总 experts 的输出, 得到最终每个 token 的输出 <code>final_out: (b * s, hidden_size)</code></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="c1"># idxs: # (b * s * num_experts_per_tok,)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">new_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">outs</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">new_x</span><span class="p">[</span><span class="n">idxs</span><span class="p">]</span> <span class="o">=</span> <span class="n">outs</span>
+</span></span><span class="line"><span class="cl"><span class="n">final_out</span> <span class="o">=</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">	<span class="n">new_x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">topk_ids</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">topk_weight</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="o">.</span><span class="n">mul_</span><span class="p">(</span><span class="n">topk_weight</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">	<span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">new_x</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>完成的推理代码参考:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="c1"># x: (b * s, hidden_size)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># topk_ids: (b * s, n_routed_experts)</span>
+</span></span><span class="line"><span class="cl"><span class="nd">@torch.no_grad</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">moe_infer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">topk_ids</span><span class="p">,</span> <span class="n">topk_weight</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="c1"># (b * s, n_routed_experts)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">cnts</span> <span class="o">=</span> <span class="n">topk_ids</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">((</span><span class="n">topk_ids</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experts</span><span class="p">)))</span>
+</span></span><span class="line"><span class="cl">	<span class="c1"># (b * s, n_routed_experts)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">cnts</span><span class="o">.</span><span class="n">scatter_</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">topk_ids</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="c1"># (n_routed_experts,)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">tokens_per_expert</span> <span class="o">=</span> <span class="n">cnts</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="c1"># (b * s * num_experts_per_tok,)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">idxs</span> <span class="o">=</span> <span class="n">topk_ids</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="c1"># (b * s * num_experts_per_tok, hidden_size)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">sorted_tokens</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">idxs</span> <span class="o">//</span> <span class="n">topk_ids</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+</span></span><span class="line"><span class="cl">	<span class="n">sorted_tokens_shape</span> <span class="o">=</span> <span class="n">sorted_tokens</span><span class="o">.</span><span class="n">shape</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="c1"># (n_routed_experts,)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">tokens_per_expert</span> <span class="o">=</span> <span class="n">tokens_per_expert</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
+</span></span><span class="line"><span class="cl">	<span class="n">start_idx</span> <span class="o">=</span> <span class="mi">0</span>
+</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">num_tokens</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tokens_per_expert</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">		<span class="n">end_idx</span> <span class="o">=</span> <span class="n">start_idx</span> <span class="o">+</span> <span class="n">num_tokens</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="n">num_tokens</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">			<span class="k">continue</span>
+</span></span><span class="line"><span class="cl">		<span class="n">expert</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">experts</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">ep_rank</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">experts_per_rank</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">		<span class="n">tokens_for_this_expert</span> <span class="o">=</span> <span class="n">sorted_tokens</span><span class="p">[</span><span class="n">start_idx</span><span class="p">:</span><span class="n">end_idx</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">		<span class="n">expert_out</span> <span class="o">=</span> <span class="n">expert</span><span class="p">(</span><span class="n">tokens_for_this_expert</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">expert_out</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="n">start_idx</span> <span class="o">=</span> <span class="n">end_idx</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">outs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span> <span class="k">else</span> <span class="n">sorted_tokens</span><span class="o">.</span><span class="n">new_empty</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">new_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">outs</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="n">new_x</span><span class="p">[</span><span class="n">idxs</span><span class="p">]</span> <span class="o">=</span> <span class="n">outs</span>
+</span></span><span class="line"><span class="cl">	<span class="n">final_out</span> <span class="o">=</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">		<span class="n">new_x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">topk_ids</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">topk_weight</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="o">.</span><span class="n">mul_</span><span class="p">(</span><span class="n">topk_weight</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">		<span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">new_x</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="n">final_out</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>最后融合 shared experts 的输出.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">n_shared_experts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">	<span class="n">y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">shared_experts</span><span class="p">(</span><span class="n">identity</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">return</span> <span class="n">y</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h1 id="训练方案">训练方案
+</h1><h2 id="pre-training">Pre-Training
+</h2><h3 id="数据构建">数据构建
+</h3><p>预训练数据集构建的目标是尽量增强数据的多样性和丰富性. 整个数据处理过程分为三个阶段:</p>
+<ul>
+<li>deduplication 去重, 增强数据质量</li>
+<li>filtering 过滤, 保证信息密度</li>
+<li>remixing 重新混合, 增强多样性</li>
+</ul>
+<p><strong>去重</strong></p>
+<p>使用了激进的去重策略, 扩大了去重的范围. 使用 <strong>MinhashLSH</strong> 算法, 在 document 和 string 两个粒度下进行去重. String 粒度是将 document 进行切分, 原始的 document 可以看做是一个 dump, 将一个 document 切分为多个 dumps. 实际证明, 当切分为 91 个 dumps 的时候, 去重的比例是使用 document 粒度去重比例的 4 倍.</p>
+<p><img src="https://cdn.jsdelivr.net/gh/pixelock/notebook-images/images/20240511140823.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p>严格去重策略, 保证了高质量数据的唯一性和完整性, 这在大规模数据集中特别重要.</p>
+<p><strong>过滤</strong></p>
+<p>过滤是对文本的质量进行评估, 这涉及到语言和语义的综合评估, 从单个样本, 以及整体样本的角度对数据质量进行评估, 移除低质量 web data. 对于高质量低资源的数据, 则不进行筛选.</p>
+<p>过滤的手段主要包含:</p>
+<ul>
+<li>heuristic rules, 启发式规则</li>
+<li>models, 评估模型</li>
+</ul>
+<p>通过各种手段, 移除有害有毒有争议的文本.</p>
+<p><strong>重新混合</strong></p>
+<p>在这个阶段, 通过数据的重新混合, 解决数据不平衡问题, 增加代表性不足领域的数据.</p>
+<p>混合了 Internet text, math, code, books, 以及自己采集的数据. 在多样性之外, 还特别重视个人隐私和著作权的保护, 将侵犯隐私和知识产权的内容从数据集中移除.</p>
+<p><strong>总结</strong></p>
+<p>训练集共收集了 8.1T tokens.</p>
+<h3 id="训练超参数">训练超参数
+</h3><p><strong>初始化</strong></p>
+<p>标准差 0.006</p>
+<p><strong>优化器</strong></p>
+<p>AdamW. $\beta_1=0.9$, $\beta_2=0.95$, $\text{weight\_decay} = 0.1$</p>
+<p><strong>scheduler</strong></p>
+<ul>
+<li>2000 steps warmup steps</li>
+<li>cosine scheduler: 训练到 60% 的 tokens 时, 学习率下降到最大值的 0.316; 到 90% 的 tokens 时, 再下降到 60% 位置对应学习率的 0.316</li>
+<li>gradient clipping: 1.0</li>
+</ul>
+<p><strong>其他关键参数</strong></p>
+<ul>
+<li>sequence length: 4096</li>
+<li>learning rate: 2.4e-4</li>
+<li>batch size: batch size scheduling strategy
+<ul>
+<li>在训练头 225B tokens 时, batch size 从 2304 逐渐增加到 9216</li>
+<li>在剩余的训练过程中保持 9216 的大小</li>
+</ul>
+</li>
+</ul>
+<h3 id="长上下文扩展">长上下文扩展
+</h3><p>在预训练得到初始 4K 上下文长度版本的 DeepSeek-V2 后, 使用 <strong>YaRN</strong> 方法, 将上下文长度从 4K 扩展到 128K. 由于 MLA 中只有 $\mathbf{k}_t^R$ 中带有 RoPE 的位置信息, 所以 YaRN 也是施加到这个上面. 使用的 YaRN 参数为:</p>
+<ul>
+<li>scale $s=40$</li>
+<li>$\alpha=1$</li>
+<li>$\beta=32$</li>
+<li>target maximum context length = 160K</li>
+</ul>
+<p>另外为了适配 MLA 机制, 调整了 length scaling factor, 因子 $\sqrt{t} = 0.0707 \ln s + 1$, 以最小化 perplexity.</p>
+<p>YaRN 的方法需要训练. 训练了 1000 steps, 使用了 batch size 576, sequence length 32K. 尽管训练时基于 32K 的序列长度, 在 128K 长度上已经可以取得比较 robust 的效果了.</p>
+<h2 id="对齐训练">对齐训练
+</h2><h3 id="sft">SFT
+</h3><p>1.5M instances 的 instruction tuning datasets, 由 1.2M helpfulness instances 和 0.3M safety instances 组成. 加强了数据质量, 以减轻幻觉, 以及增强写作能力.</p>
+<ul>
+<li>SFT with 2 epochs</li>
+<li>learning rate 5e-6</li>
+</ul>
+<h3 id="rl">RL
+</h3><p>DeepSeek-V2 没有使用 RM + PPO, 而是使用了 RM + GRPO 的方法. 相比之下, 这种方法不需要更新 policy 中的 value model 的方法.</p>
+<p><img src="https://cdn.jsdelivr.net/gh/pixelock/notebook-images/images/20240511153823.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<h1 id="参考资料">参考资料
+</h1><ul>
+<li><a class="link" href="https://arxiv.org/abs/2405.04434"  target="_blank" rel="noopener"
+    >DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model</a></li>
+<li><a class="link" href="https://arxiv.org/abs/2401.02954"  target="_blank" rel="noopener"
+    >DeepSeek LLM Scaling Open-Source Language Models with Longtermism</a></li>
+<li><a class="link" href="https://github.com/deepseek-ai/DeepSeek-LLM"  target="_blank" rel="noopener"
+    >Github DeepSeek-LLM</a></li>
+</ul>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/llm/">LLM</a>
+        
+            <a href="/tags/model/">Model</a>
+        
+            <a href="/tags/pre-training/">Pre-Training</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI&#43;WdtXRGWt2kTvGFasHpSy3SV"crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG&#43;vnGctmUb0ZY0l8"crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"integrity="sha384-&#43;VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4&#43;/RRE05"crossorigin="anonymous"
+                defer
+                >
+            </script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" integrity="sha384-wcIxkf4k558AjM3Yz3BBFQUbk/zgIYC2R0QpeeYb+TwlBVMrlgLqwRjRtGZiK7ww" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" integrity="sha384-hIoBPJpTUs74ddyc4bFZSM1TVlQDA60VBbJS0oA934VSz82sBx1X7kSx2ATBDIyd" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: "\\begin{align}", right: "\\end{align}", display: true},
+              {left: "\\begin{aligned}", right: "\\end{aligned}", display: true},
+              {left: "\\begin{alignat}", right: "\\end{alignat}", display: true},
+              {left: "\\begin{gather}", right: "\\end{gather}", display: true},
+              {left: "\\begin{equation}", right: "\\end{equation}", display: true},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+          ],
+          throwOnError : true
+        });
+    });
+</script>
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    <div class="disqus-container">
+    <div id="disqus_thread"></div>
+<script>
+    window.disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "hugo-theme-stack" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div>
+
+<style>
+    .disqus-container {
+        background-color: var(--card-background);
+        border-radius: var(--card-border-radius);
+        box-shadow: var(--shadow-l1);
+        padding: var(--card-padding);
+    }
+</style>
+
+<script>
+    window.addEventListener('onColorSchemeChange', (e) => {
+        if (typeof DISQUS == 'object') {
+            DISQUS.reset({
+                reload: true
+            });
+        }
+    })
+</script>
+
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+        2024 pixelock
+    </section>
+    
+    <section class="powerby">
+        
+            Hello my friend <br/>
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.26.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>
