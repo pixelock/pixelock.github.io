@@ -35,8 +35,8 @@ Transformer 标准的 MHA(Multi-Head Attention) 结构中, $n_h$ 为 attention h
 
 $$
 \begin{aligned}
-& \mathbf{q}_t = W_Q \mathbf{h}_t \\
-& \mathbf{k}_t = W_K \mathbf{h}_t \\
+& \mathbf{q}_t = W_Q \mathbf{h}_t \\\
+& \mathbf{k}_t = W_K \mathbf{h}_t \\\
 & \mathbf{v}_t = W_V \mathbf{h}_t
 \end{aligned}
 $$
@@ -45,11 +45,11 @@ $$
 
 $$
 \begin{aligned}
-& {\left[\mathbf{q}_{t, 1} ; \mathbf{q}_{t, 2} ; \ldots ; \mathbf{q}_{t, n_h}\right]=\mathbf{q}_t,} \\
-& {\left[\mathbf{k}_{t, 1} ; \mathbf{k}_{t, 2} ; \ldots ; \mathbf{k}_{t, n_h}\right]=\mathbf{k}_t,} \\
-& {\left[\mathbf{v}_{t, 1} ; \mathbf{v}_{t, 2} ; \ldots ; \mathbf{v}_{t, n_h}\right]=\mathbf{v}_t,} \\
-& \mathbf{o}_{t, i}=\sum_{j=1}^t \operatorname{Softmax}_j\left(\frac{\mathbf{q}_{t, i}^T \mathbf{k}_{j, i}}{\sqrt{d_h}}\right) \mathbf{v}_{j, i}, \\
-& \mathbf{u}_t=W^O\left[\mathbf{o}_{t, 1} ; \mathbf{o}_{t, 2} ; \ldots ; \mathbf{o}_{t, n_h}\right],
+& {\left[\mathbf{q}\_{t, 1} ; \mathbf{q}\_{t, 2} ; \ldots ; \mathbf{q}\_{t, n_h}\right]=\mathbf{q}_t,} \\\
+& {\left[\mathbf{k}\_{t, 1} ; \mathbf{k}\_{t, 2} ; \ldots ; \mathbf{k}\_{t, n_h}\right]=\mathbf{k}_t,} \\\
+& {\left[\mathbf{v}\_{t, 1} ; \mathbf{v}\_{t, 2} ; \ldots ; \mathbf{v}\_{t, n_h}\right]=\mathbf{v}_t,} \\\
+& \mathbf{o}\_{t, i}=\sum\_{j=1}^t \operatorname{Softmax}_j\left(\frac{\mathbf{q}\_{t, i}^T \mathbf{k}\_{j, i}}{\sqrt{d_h}}\right) \mathbf{v}\_{j, i}, \\\
+& \mathbf{u}_t=W^O\left[\mathbf{o}\_{t, 1} ; \mathbf{o}\_{t, 2} ; \ldots ; \mathbf{o}\_{t, n_h}\right],
 \end{aligned}
 $$
 
@@ -62,8 +62,8 @@ $$
 
 $$
 \begin{aligned}
-\mathbf{c}_t^{K V} & =W^{D K V} \mathbf{h}_t \\
-\mathbf{k}_t^C & =W^{U K} \mathbf{c}_t^{K V} \\
+\mathbf{c}_t^{K V} & =W^{D K V} \mathbf{h}_t \\\
+\mathbf{k}_t^C & =W^{U K} \mathbf{c}_t^{K V} \\\
 \mathbf{v}_t^C & =W^{U V} \mathbf{c}_t^{K V}
 \end{aligned}
 $$
@@ -79,7 +79,7 @@ $\mathbf{c}_t^{K V} \in \mathbb{R}^{d_c}$ 是压缩后的可训练隐向量, 目
 
 $$
 \begin{aligned}
-\mathbf{c}_t^{Q} & =W^{DQ} \mathbf{h}_t \\
+\mathbf{c}_t^{Q} & =W^{DQ} \mathbf{h}_t \\\
 \mathbf{q}_t^C & =W^{U Q} \mathbf{c}_t^{Q}
 \end{aligned}
 $$
@@ -96,29 +96,29 @@ Low-Rank compression 一个最大的问题是与 KV Cache 不兼容. RoPE 需要
 
 这两种 queries 和 keys 在计算 Multi-head attention 之前经过各种计算得到上面的两类, 然后在隐向量维度上拼接起来, 组成一个更长的向量进行 attention 计算. 相当于每个参与 attention 计算的向量, 部分参数包含 RoPE 位置信息, 另外的参数则不包含.
 
-具体来说, 上面使用 Low-Rank compression 得到的 $\mathbf{k}_t^C$ 和 $\mathbf{q}_t^C$ 是不需要计算 RoPE 的 queries 和 keys, 相应的维度为 $d_h n_h$. 另外设置需要计算 RoPE 的 queries 和 keys $\mathbf{q}_{t,i}^{R} \in \mathbb{R}^{d_h^R}$ 和 $\mathbf{k}_t^R \in \mathbb{R}^{d_h^R}$, 其中 $i$ 表示第 $i$ 个 head, $d_h^R$ 代表了这部分每个 head 中的维度.
+具体来说, 上面使用 Low-Rank compression 得到的 $\mathbf{k}_t^C$ 和 $\mathbf{q}_t^C$ 是不需要计算 RoPE 的 queries 和 keys, 相应的维度为 $d_h n_h$. 另外设置需要计算 RoPE 的 queries 和 keys $\mathbf{q}\_{t,i}^{R} \in \mathbb{R}^{d_h^R}$ 和 $\mathbf{k}_t^R \in \mathbb{R}^{d_h^R}$, 其中 $i$ 表示第 $i$ 个 head, $d_h^R$ 代表了这部分每个 head 中的维度.
 
 在使用了上面的方法, 将 MLA 与 RoPE 结合后, 对应的计算过程为:
 
 $$
 \begin{aligned}
-& {\left[\mathbf{q}_{t, 1}^R ; \mathbf{q}_{t, 2}^R ; \ldots ; \mathbf{q}_{t, n_h}^R\right]=\mathbf{q}_t^R=\operatorname{RoPE}\left(W^{Q R} \mathbf{c}_t^Q\right),} \\
-& \mathbf{k}_t^R=\operatorname{RoPE}\left(W^{K R} \mathbf{h}_t\right) \text {, } \\
-& \mathbf{q}_{t, i}=\left[\mathbf{q}_{t, i}^C ; \mathbf{q}_{t, i}^R\right] \text {, } \\
-& \mathbf{k}_{t, i}=\left[\mathbf{k}_{t, i}^C ; \mathbf{k}_t^R\right] \text {, } \\
-& \mathbf{o}_{t, i}=\sum_{j=1}^t \operatorname{Softmax}_j\left(\frac{\mathbf{q}_{t, i}^T \mathbf{k}_{j, i}}{\sqrt{d_h+d_h^R}}\right) \mathbf{v}_{j, i}^C \\
-& \mathbf{u}_t=W^O\left[\mathbf{o}_{t, 1} ; \mathbf{o}_{t, 2} ; \ldots ; \mathbf{o}_{t, n_h}\right],
+& {\left[\mathbf{q}\_{t, 1}^R ; \mathbf{q}\_{t, 2}^R ; \ldots ; \mathbf{q}\_{t, n_h}^R\right]=\mathbf{q}_t^R=\operatorname{RoPE}\left(W^{Q R} \mathbf{c}_t^Q\right),} \\\
+& \mathbf{k}_t^R=\operatorname{RoPE}\left(W^{K R} \mathbf{h}_t\right) \text {, } \\\
+& \mathbf{q}\_{t, i}=\left[\mathbf{q}\_{t, i}^C ; \mathbf{q}\_{t, i}^R\right] \text {, } \\\
+& \mathbf{k}\_{t, i}=\left[\mathbf{k}\_{t, i}^C ; \mathbf{k}_t^R\right] \text {, } \\\
+& \mathbf{o}\_{t, i}=\sum\_{j=1}^t \operatorname{Softmax}_j\left(\frac{\mathbf{q}\_{t, i}^T \mathbf{k}\_{j, i}}{\sqrt{d_h+d_h^R}}\right) \mathbf{v}\_{j, i}^C \\\
+& \mathbf{u}_t=W^O\left[\mathbf{o}\_{t, 1} ; \mathbf{o}\_{t, 2} ; \ldots ; \mathbf{o}\_{t, n_h}\right],
 \end{aligned}
 $$
 
-可以看到, 每个 head 中计算 RoPE 的 query $\mathbf{q}_{t,i}^{R}$ 和 $\mathbf{k}_t^R$ 的维度都是 $d_h^R$, 而 query 是每个 head 都有, 但 key 是所有 heads 中的 queries 中共享同一个 $\mathbf{k}_t^R$, 是标准的 MQA 思路.
+可以看到, 每个 head 中计算 RoPE 的 query $\mathbf{q}\_{t,i}^{R}$ 和 $\mathbf{k}_t^R$ 的维度都是 $d_h^R$, 而 query 是每个 head 都有, 但 key 是所有 heads 中的 queries 中共享同一个 $\mathbf{k}_t^R$, 是标准的 MQA 思路.
 
-$\mathbf{q}_{t, i}^C ; \mathbf{q}_{t, i}^R$ 两种 query 拼接在一起得到新的 query, $\mathbf{k}_{t, i}^C ; \mathbf{k}_t^R$ 两种 key 拼接在一起得到新的 key, 也能明显看到, key 的一部分是 MHA 的思路, 使用了 Low-Rank compression, 另一部分是所有 head 中拼接相同的 key, 使用了 MQA 的思路.
+$\mathbf{q}\_{t, i}^C ; \mathbf{q}\_{t, i}^R$ 两种 query 拼接在一起得到新的 query, $\mathbf{k}\_{t, i}^C ; \mathbf{k}_t^R$ 两种 key 拼接在一起得到新的 key, 也能明显看到, key 的一部分是 MHA 的思路, 使用了 Low-Rank compression, 另一部分是所有 head 中拼接相同的 key, 使用了 MQA 的思路.
 ### KV Cache 最终大小
 
 从上面两节可以看到, MLA 是一种 MHA 和 MQA 之间的均衡:
 
-- MHA 部分对应的 $\mathbf{k}_t^C \in \mathbb{R}^{d_h n_h}$ 在上面分析了, 缓存的是 $\mathbf{c}_t^{K V}$, $\mathbf{c}_t^{K V}$ 其实也是所有 head 共用的, 是经过 $W^{U K}$ 得到了 attention 计算各个 head 对应的 keys $\mathbf{k}_t^C = \left[\mathbf{k}_{t, 1}^R ; \mathbf{k}_{t, 2}^R ; \ldots ; \mathbf{k}_{t, n_h}^R\right]$
+- MHA 部分对应的 $\mathbf{k}_t^C \in \mathbb{R}^{d_h n_h}$ 在上面分析了, 缓存的是 $\mathbf{c}_t^{K V}$, $\mathbf{c}_t^{K V}$ 其实也是所有 head 共用的, 是经过 $W^{U K}$ 得到了 attention 计算各个 head 对应的 keys $\mathbf{k}_t^C = \left[\mathbf{k}\_{t, 1}^R ; \mathbf{k}\_{t, 2}^R ; \ldots ; \mathbf{k}\_{t, n_h}^R\right]$
 - MQA 部分引入的 $\mathbf{k}_t^R$ 是需要被缓存的, 这部分包含了 RoPE 的位置信息
 
 因此整个 MLA 机制需要缓存的内容为 $\mathbf{c}_t^{K V} \in \mathbb{R}^{d_c}$ 和 $\mathbf{k}_t^R \in \mathbb{R}^{d_h^R}$, 这样每个 token 对应的 KV Cache 为 $(d_c + d_h^{R})l$ 个元素.
@@ -142,17 +142,17 @@ MLA 中, 第 $t$ 个 token 在 attention 结构中完整的计算过程如下:
 
 $$
 \begin{aligned}
-& \mathbf{c}_t^Q=W^{D Q} \mathbf{h}_t, \\
-& {\left[\mathbf{q}_{t, 1}^C ; \mathbf{q}_{t, 2}^C ; \ldots ; \mathbf{q}_{t, n_h}^C\right]=\mathbf{q}_t^C=W^{U Q} \mathbf{c}_t^Q ，} \\
-& {\left[\mathbf{q}_{t, 1}^R ; \mathbf{q}_{t, 2}^R ; \ldots ; \mathbf{q}_{t, n_h}^R\right]=\mathbf{q}_t^R=\operatorname{RoPE}\left(W^{Q R} \mathbf{c}_t^Q\right) \text {, }} \\
-& \mathbf{q}_{t, i}=\left[\mathbf{q}_{t, i}^C ; \mathbf{q}_{t, i}^R\right] \text {, } \\
-& \mathbf{c}_t^{K V}=W^{D K V} \mathbf{h}_t \text {, } \\
-& {\left[\mathbf{k}_{t, 1}^C ; \mathbf{k}_{t, 2}^C ; \ldots ; \mathbf{k}_{t, n_h}^C\right]=\mathbf{k}_t^C=W^{U K} \mathbf{c}_t^{K V},} \\
-& \mathbf{k}_t^R=\operatorname{RoPE}\left(W^{K R} \mathbf{h}_t\right), \\
-& \mathbf{k}_{t, i}=\left[\mathbf{k}_{t, i}^C ; \mathbf{k}_t^R\right], \\
-& {\left[\mathbf{v}_{t, 1}^C ; \mathbf{v}_{t, 2}^C ; \ldots ; \mathbf{v}_{t, n_h}^C\right]=\mathbf{v}_t^C=W^{U V} \mathbf{c}_t^{K V},} \\
-& \mathbf{o}_{t, i}=\sum_{j=1}^t \operatorname{Softmax}_j\left(\frac{\mathbf{q}_{t, i}^T \mathbf{k}_{j, i}}{\sqrt{d_h+d_h^R}}\right) \mathbf{v}_{j, i^{\prime}}^C \\
-& \mathbf{u}_t=W^O\left[\mathbf{o}_{t, 1} ; \mathbf{o}_{t, 2} ; \ldots ; \mathbf{o}_{t, n_h}\right],
+& \mathbf{c}_t^Q=W^{D Q} \mathbf{h}_t, \\\
+& {\left[\mathbf{q}\_{t, 1}^C ; \mathbf{q}\_{t, 2}^C ; \ldots ; \mathbf{q}\_{t, n_h}^C\right]=\mathbf{q}_t^C=W^{U Q} \mathbf{c}_t^Q ，} \\\
+& {\left[\mathbf{q}\_{t, 1}^R ; \mathbf{q}\_{t, 2}^R ; \ldots ; \mathbf{q}\_{t, n_h}^R\right]=\mathbf{q}_t^R=\operatorname{RoPE}\left(W^{Q R} \mathbf{c}_t^Q\right) \text {, }} \\\
+& \mathbf{q}\_{t, i}=\left[\mathbf{q}\_{t, i}^C ; \mathbf{q}\_{t, i}^R\right] \text {, } \\\
+& \mathbf{c}_t^{K V}=W^{D K V} \mathbf{h}_t \text {, } \\\
+& {\left[\mathbf{k}\_{t, 1}^C ; \mathbf{k}\_{t, 2}^C ; \ldots ; \mathbf{k}\_{t, n_h}^C\right]=\mathbf{k}_t^C=W^{U K} \mathbf{c}_t^{K V},} \\\
+& \mathbf{k}_t^R=\operatorname{RoPE}\left(W^{K R} \mathbf{h}_t\right), \\\
+& \mathbf{k}\_{t, i}=\left[\mathbf{k}\_{t, i}^C ; \mathbf{k}_t^R\right], \\\
+& {\left[\mathbf{v}\_{t, 1}^C ; \mathbf{v}\_{t, 2}^C ; \ldots ; \mathbf{v}\_{t, n_h}^C\right]=\mathbf{v}_t^C=W^{U V} \mathbf{c}_t^{K V},} \\\
+& \mathbf{o}\_{t, i}=\sum\_{j=1}^t \operatorname{Softmax}_j\left(\frac{\mathbf{q}\_{t, i}^T \mathbf{k}\_{j, i}}{\sqrt{d_h+d_h^R}}\right) \mathbf{v}\_{j, i^{\prime}}^C \\\
+& \mathbf{u}_t=W^O\left[\mathbf{o}\_{t, 1} ; \mathbf{o}\_{t, 2} ; \ldots ; \mathbf{o}\_{t, n_h}\right],
 \end{aligned}
 $$
 
@@ -344,10 +344,11 @@ attn_output = self.o_proj(attn_output)
 
 $$
 \begin{aligned}
-& \mathbf{h}_t^{\prime}=\mathbf{u}_t+\sum_{i=1}^{N_s} \operatorname{FFN}_i^{(s)}\left(\mathbf{u}_t\right)+\sum_{i=1}^{N_r} g_{i, t} \operatorname{FFN}_i^{(r)}\left(\mathbf{u}_t\right), \\
-& g_{i, t}= \begin{cases}s_{i, t}, & s_{i, t} \in \operatorname{Topk}\left(\left\{s_{j, t} \mid 1 \leqslant j \leqslant N_r\right\}, K_r\right), \\
-0, \quad \text { otherwise, }\end{cases} \\
-& s_{i, t}=\operatorname{Softmax}_i\left(\mathbf{u}_t^T \mathbf{e}_i\right),
+& \mathbf{h}_t^{\prime}=\mathbf{u}_t+\sum\_{i=1}^{N_s} \operatorname{FFN}_i^{(s)}\left(\mathbf{u}_t\right)+\sum\_{i=1}^{N_r} g\_{i, t} \operatorname{FFN}_i^{(r)}\left(\mathbf{u}_t\right), \\\
+& g\_{i, t} = \begin{cases}
+    s\_{i, t}, & s\_{i, t} \in \operatorname{Topk}\left(\left\\{s\_{j, t} \mid 1 \leqslant j \leqslant N_r\right\\}, K_r\right), \\\
+    0, \quad \text { otherwise, }\end{cases} \\\
+& s\_{i, t}=\operatorname{Softmax}_i\left(\mathbf{u}_t^T \mathbf{e}_i\right),
 \end{aligned}
 $$
 
@@ -355,13 +356,14 @@ $$
 
 $\mathbf{u}_t$ 是第 $t$ 个 token 的 FFN 输入, $N_s$ 和 $N_r$ 分别代表 Shared Expert 和 Routed Expert 的数量, $\operatorname{FFN}_i^{(s)}(\cdot)$ 和 $\operatorname{FFN}_i^{(r)}(\cdot)$ 分别代表了第 $i$ Shared Expert 和第 $i$ 个 Routed Expert.
 
-$K_r$ 代表了要激活几个 Routed Expert. $g_{i,t}$ 代表了第 $i$ 个 Routed Expert 对应的 gate value.
+$K_r$ 代表了要激活几个 Routed Expert. $g\_{i,t}$ 代表了第 $i$ 个 Routed Expert 对应的 gate value.
 
-$s_{i,t}$ 代表了当前第 $t$ 个 token 对第 $i$ 个 Routed Expert 的倾向程度, 由每个 Routed Expert 对应的 softmax 得到. $\mathbf{e}_i$ 是这层中第 $i$ 个 Routed Expert 对应的 centroid 向量.
+$s\_{i,t}$ 代表了当前第 $t$ 个 token 对第 $i$ 个 Routed Expert 的倾向程度, 由每个 Routed Expert 对应的 softmax 得到. $\mathbf{e}_i$ 是这层中第 $i$ 个 Routed Expert 对应的 centroid 向量.
 
-最后将选择出的 TopK Routed Expert 乘上对应的 $g_{i,t}$ gate value 作为权重, 再加上所有 Shared Expert 的输入, 以及原始输入 $\mathbf{u}_t$, 得到第 $t$ 个 token 的最终输出 $\mathbf{h}_t^{\prime}$.
+最后将选择出的 TopK Routed Expert 乘上对应的 $g\_{i,t}$ gate value 作为权重, 再加上所有 Shared Expert 的输入, 以及原始输入 $\mathbf{u}_t$, 得到第 $t$ 个 token 的最终输出 $\mathbf{h}_t^{\prime}$.
 
 在开源的 [DeepSeek-V2](https://huggingface.co/deepseek-ai/DeepSeek-V2) 模型中的 [config](https://huggingface.co/deepseek-ai/DeepSeek-V2/blob/main/config.json) 中对应的 Routed Expert `n_routed_experts` 数量为 160, 选取 `num_experts_per_tok` TopK $K_r = 6$; Shared Expert 的数量 `n_shared_experts` 为 2.
+
 ### 代码
 
 其中还是有很多细节, 需要代码阐释. 首先是 MoE 的整体是怎么定义的. 其中通过 `config.ep_size` 的配置定义了 expert parallel 的数量, 即针对 expert 是否并行计算, DeepSeekMoE 结构进行了专门的优化.
@@ -531,13 +533,13 @@ Expert-Level Balance Loss 的定义为
 
 $$
 \begin{aligned}
-\mathcal{L}_{\mathrm{ExpBal}}& =\alpha_{1}\sum_{i=1}^{N_{r}}f_{i}P_{i},  \\
-&f_{i} =\frac{N_{r}}{K_{r}T}\sum_{t=1}^{T}\mathbb{1}(\mathrm{Token~}t\mathrm{~selects~Expert~}i),  \\
-&P_{i} =\frac{1}{T}\sum_{t=1}^{T}s_{i,t}, 
+\mathcal{L}\_{\mathrm{ExpBal}}& =\alpha\_{1}\sum\_{i=1}^{N\_{r}}f\_{i}P\_{i},  \\\
+&f\_{i} =\frac{N\_{r}}{K\_{r}T}\sum\_{t=1}^{T}\mathbb{1}(\mathrm{Token~}t\mathrm{~selects~Expert~}i),  \\\
+&P\_{i} =\frac{1}{T}\sum\_{t=1}^{T}s\_{i,t}, 
 \end{aligned}
 $$
 
-$s_{i,t}$ 代表的就是第 $i$ 个 router expert 在第 $t$ 个 token 上的分数, 将所有 token 的分数平均, 得到这个 expert 对应的分数 $P_i$. $f_i$ 是第 $i$ 个 expert 对应的 loss 权重, 与 batch 内有多少个 token 激活了这个 expert 相关, 越多的 tokens 选择这个 expert, 则这个 expert 产生的 loss 越大.
+$s\_{i,t}$ 代表的就是第 $i$ 个 router expert 在第 $t$ 个 token 上的分数, 将所有 token 的分数平均, 得到这个 expert 对应的分数 $P_i$. $f_i$ 是第 $i$ 个 expert 对应的 loss 权重, 与 batch 内有多少个 token 激活了这个 expert 相关, 越多的 tokens 选择这个 expert, 则这个 expert 产生的 loss 越大.
 
 最后将分数 $P_i$ 和权重 $f_i$ 乘在一起, expert 的得分越高, 或者这个选择 expert 的 tokens 越多, 说明这个 expert 越有被偏向的风险. 通过 Expert-Level Balance Loss 这个正则项, 来缓解这个问题.
 
