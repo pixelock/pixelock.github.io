@@ -13,6 +13,7 @@ tags:
   - LLM
   - Model
   - Pre-training
+  - DeepSeek
 ---
 
 Paper: [DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model](https://arxiv.org/abs/2405.04434)

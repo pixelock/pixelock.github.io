@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="模型介绍 LWM(Large World Model) 是一个多模态模型, 并且同时支持 1M 的上下文长度. 这里了解这样的模型是怎么训练出来的. World Model on Million-Length Video And Language With Blockwise RingAttention Huggingface Github 训练方法 Stage 1: 训练长上">
+<title>LWM Insight</title>
+
+<link rel='canonical' href='http://localhost:1313/p/lwm-insight/'>
+
+<link rel="stylesheet" href="/scss/style.min.0304c6baf04e01a8fe70693791cb744d56a3578a3120a8796cefc66825aa39c7.css"><meta property='og:title' content="LWM Insight">
+<meta property='og:description' content="模型介绍 LWM(Large World Model) 是一个多模态模型, 并且同时支持 1M 的上下文长度. 这里了解这样的模型是怎么训练出来的. World Model on Million-Length Video And Language With Blockwise RingAttention Huggingface Github 训练方法 Stage 1: 训练长上">
+<meta property='og:url' content='http://localhost:1313/p/lwm-insight/'>
+<meta property='og:site_name' content='外置记忆体'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='LLM' /><meta property='article:tag' content='Model' /><meta property='article:tag' content='Pre-training' /><meta property='article:tag' content='SFT' /><meta property='article:published_time' content='2024-05-16T23:39:39&#43;08:00'/><meta property='article:modified_time' content='2024-05-16T23:39:39&#43;08:00'/>
+<meta name="twitter:title" content="LWM Insight">
+<meta name="twitter:description" content="模型介绍 LWM(Large World Model) 是一个多模态模型, 并且同时支持 1M 的上下文长度. 这里了解这样的模型是怎么训练出来的. World Model on Million-Length Video And Language With Blockwise RingAttention Huggingface Github 训练方法 Stage 1: 训练长上">
+  
+
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_huda2458f72ce188392d75c5d51cd8e24e_373_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">外置记忆体</a></h1>
+            <h2 class="site-description">记录链接思维碎片</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/pixelock'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://twitter.com'
+                        target="_blank"
+                        title="Twitter"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-twitter" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M22 4.01c-1 .49 -1.98 .689 -3 .99c-1.121 -1.265 -2.783 -1.335 -4.38 -.737s-2.643 2.06 -2.62 3.737v1c-3.245 .083 -6.135 -1.395 -8 -4c0 0 -4.182 7.433 4 11c-1.872 1.247 -3.739 2.088 -6 2c3.308 1.803 6.913 2.423 10.034 1.517c3.58 -1.04 6.522 -3.723 7.651 -7.742a13.84 13.84 0 0 0 .497 -3.753c-.002 -.249 1.51 -2.772 1.818 -4.013z" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>归档</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>检索</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E9%93%BE%E6%8E%A5/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>链接</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/about/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于我</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+                    
+                        <li id="i18n-switch">  
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-language" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 5h7" />
+  <path d="M9 3v2c0 4.418 -2.239 8 -5 8" />
+  <path d="M5 9c-.003 2.144 2.952 3.908 6.7 4" />
+  <path d="M12 20l4 -9l4 9" />
+  <path d="M19.1 18h-6.2" />
+</svg>
+
+
+
+                            <select name="language" title="language" onchange="window.location.href = this.selectedOptions[0].value">
+                                
+                                    <option value="http://localhost:1313/en/" >English</option>
+                                
+                                    <option value="http://localhost:1313/" selected>中文</option>
+                                
+                            </select>
+                        </li>
+                    
+                
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ol>
+    <li><a href="#stage-1-训练长上下文语言模型">Stage 1: 训练长上下文语言模型</a>
+      <ol>
+        <li><a href="#如何扩增模型的上下文长度">如何扩增模型的上下文长度</a>
+          <ol>
+            <li><a href="#1-模型结构支持">1. 模型结构支持</a></li>
+            <li><a href="#2-逐步训练">2. 逐步训练</a></li>
+            <li><a href="#3-rope-位置外推">3. RoPE 位置外推</a></li>
+          </ol>
+        </li>
+        <li><a href="#如何准备训练数据集">如何准备训练数据集</a></li>
+        <li><a href="#训练过程">训练过程</a></li>
+        <li><a href="#长上下文-sft">长上下文 SFT</a>
+          <ol>
+            <li><a href="#sft-数据集准备重点">SFT 数据集准备(重点)</a></li>
+          </ol>
+        </li>
+      </ol>
+    </li>
+    <li><a href="#stage-2-训练长上下文的多模态模型">Stage 2: 训练长上下文的多模态模型</a>
+      <ol>
+        <li><a href="#如何修改模型架构以融合视觉">如何修改模型架构以融合视觉</a></li>
+        <li><a href="#训练过程-1">训练过程</a></li>
+      </ol>
+    </li>
+  </ol>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/llm/model/" >
+                LLM/Model
+            </a>
+        
+            <a href="/categories/llm/model/multimodal/" >
+                LLM/Model/Multimodal
+            </a>
+        
+            <a href="/categories/llm/model/longcontext/" >
+                LLM/Model/LongContext
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/lwm-insight/">LWM Insight</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">2024 May 16</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 6 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h1 id="模型介绍">模型介绍
+</h1><p>LWM(Large World Model) 是一个多模态模型, 并且同时支持 1M 的上下文长度. 这里了解这样的模型是怎么训练出来的.</p>
+<ul>
+<li><a class="link" href="https://arxiv.org/abs/2402.08268"  target="_blank" rel="noopener"
+    >World Model on Million-Length Video And Language With Blockwise RingAttention</a></li>
+<li><a class="link" href="https://huggingface.co/LargeWorldModel"  target="_blank" rel="noopener"
+    >Huggingface</a></li>
+<li><a class="link" href="https://github.com/LargeWorldModel/LWM"  target="_blank" rel="noopener"
+    >Github</a></li>
+</ul>
+<h1 id="训练方法">训练方法
+</h1><h2 id="stage-1-训练长上下文语言模型">Stage 1: 训练长上下文语言模型
+</h2><p>第一阶段是训练纯文本模型 LWM-Text 和 LWM-Text-Chat. 上下文长度的扩展是渐进的, 从模型的原生长度到最终的 1M 长度, 中间会训练多个版本不同长度的模型.</p>
+<p>训练超长的上下文长度要占用大量的内存, 这里使用两个关键技术, 大幅降低训练长上下文的内存限制:</p>
+<ul>
+<li>RingAttention</li>
+<li>Blockwise Transformer</li>
+</ul>
+<h3 id="如何扩增模型的上下文长度">如何扩增模型的上下文长度
+</h3><h4 id="1-模型结构支持">1. 模型结构支持
+</h4><p><a class="link" href="https://arxiv.org/abs/2310.01889"  target="_blank" rel="noopener"
+    >Ring attention with blockwise transformers for near-infinite context</a></p>
+<p><a class="link" href="https://arxiv.org/abs/2305.19370"  target="_blank" rel="noopener"
+    >Blockwise parallel transformer for large context models</a></p>
+<p>由于传统 attention 结构在计算 attention weights 的平方复杂度, 而且现有的各种并行方案(DP, PP, TP)都需要将完整的序列投放到一个节点上, 因此单个节点的内存会限制训练样本的最长长度.</p>
+<p>这里需要使用 Blockwise RingAttention, 在<strong>序列维度</strong>上并行计算, 突破单个节点的内存限制, 这样能处理的长度只受节点数量的限制.</p>
+<p>论文中还进行了进一步的效率优化: 将 Blockwise RingAttention 与 FlashAttention 融合, 再结合 Pallas 进一步提升.</p>
+<h4 id="2-逐步训练">2. 逐步训练
+</h4><p><a class="link" href="https://arxiv.org/abs/2310.00576"  target="_blank" rel="noopener"
+    >Growlength: Accelerating llms pretraining by progressively growing training length</a></p>
+<p>上一步通过 Blockwise RingAttention 突破了单点内存的限制, 但 attention 的平方级别的计算复杂度让计算仍然非常耗时.</p>
+<p>为了解决这个问题, 在训练过程中, 逐渐增加序列的长度, 从 32K 逐步增加到 1M tokens 的长度. 直觉上, 先打好 tokens 在 shorter-range 上依赖关系的基础, 然后再扩展到更长的序列上.</p>
+<p>由于每个样本的训练时间, 与样本长度成正比, 采用了上面的方案后, 相比与在最长(1M)序列长度上直接训练, 在相同的时间内, 训练的 tokens 总量明显扩大了数量级.</p>
+<p>上下文长度扩展的节奏如下:</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Context</th>
+<th>Doc Length</th>
+<th>Total Examples</th>
+<th>Total Tokens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>32k</td>
+<td>10k - 100k</td>
+<td>78k</td>
+<td>7B</td>
+</tr>
+<tr>
+<td>2</td>
+<td>128k</td>
+<td>100k - 200k</td>
+<td>92k</td>
+<td>12B</td>
+</tr>
+<tr>
+<td>3</td>
+<td>256k</td>
+<td>200k - 500k</td>
+<td>37k</td>
+<td>10B</td>
+</tr>
+<tr>
+<td>4</td>
+<td>512k</td>
+<td>500k - 1M</td>
+<td>3.5k</td>
+<td>3B</td>
+</tr>
+<tr>
+<td>5</td>
+<td>1M</td>
+<td>1M+</td>
+<td>0.8k</td>
+<td>1B</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="3-rope-位置外推">3. RoPE 位置外推
+</h4><p>为了扩展 position embedding 能够在长上下文中有更好的表现, 采用了一种简单的方法, 将 RoPE 中的参数 $\theta$ 根据上下文的长度倍增. 原始版本的 $\theta=10000$. 在这里长度与 $\theta$ 的对应关系为:</p>
+<p><img src="https://cdn.jsdelivr.net/gh/pixelock/notebook-images/images/20240514174507.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p>至于为什么简单地增加 $\theta$ 就能够让 RoPE 在长上下文上有好的表现, 先看下面这张图. 这张图的值是 query 和 key 向量之间的 attention scores 期望在不同相对距离上的表现, 蓝色代表 $\theta=10000$, 橙色代表 $\theta=1000000$. 可以看到更大的 $\theta$ 可以防止 attention score 在长距离上的衰减, 从而使得 far-away tokens 也能够对当前的预测产生贡献.</p>
+<p>在预训练阶段引入这种方法, 可以让 loss curves 更稳定, 特别是在低学习率上. 更具体的可以参考 <a class="link" href="https://arxiv.org/abs/2308.12950"  target="_blank" rel="noopener"
+    >Code llama: Open foundation models for code</a> 这篇论文.</p>
+<p><img src="https://cdn.jsdelivr.net/gh/pixelock/notebook-images/images/20240514174713.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<h3 id="如何准备训练数据集">如何准备训练数据集
+</h3><p>预训练阶段使用数据集来自 The Pile Books3 dataset. 由于每个样本是一本书, 所以数据集中有超长的样本. 每个阶段使用的样本长度不同, 因此需要过滤出相应长度的样本.</p>
+<h3 id="训练过程">训练过程
+</h3><p>从 LLaMA-2 7B 开始, 下表详细记录了每个阶段训练的详情. 一个阶段训练结束后, 作为下一个阶段的初始化.</p>
+<p><img src="https://cdn.jsdelivr.net/gh/pixelock/notebook-images/images/20240514174507.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<h3 id="长上下文-sft">长上下文 SFT
+</h3><p>用 Book3 数据集完成预训练后, 还需要进行 Chat Fine-tuning 以让模型掌握指令跟随的能力 / 聊天能力.</p>
+<h4 id="sft-数据集准备重点">SFT 数据集准备(重点)
+</h4><p>将 Book3 数据集中的样本进行分块(chunk), 每块大小为 1000 个 tokens. 将每个 chunk 通过 prompt 编排后输入到短上下文的 LLM 中生成一个 Question-Answer 对. 得到一批这样的 chunk 和 QA 对组合.</p>
+<p>当我们需要对长上下文的预训练模型进行 SFT 时, 例如对 32K 上下文长度的模型, 我们要拼接出一个包含 32K tokens 的样本, 方法将相邻的 chunk 拼接在一起, 并且将这些 chunks 对应的 QA 组织成 Chat 的形式, 拼接在这个样本的最后.</p>
+<p>最后采用的数据集来自两部分, 一部分是 UltraChat 数据集, 另一部分是用上面的方法生成的 QA 数据集, 这两部分的比例为 <code>7: 3</code>. 对于 UltraChat 数据集, 也要提前 pack 为训练模型的序列上下文上限的长度, 这点非常重要.</p>
+<p>由于 UltraChat 多为短的 chat sequences, 因此 packed 后的样本, 需要计算 loss 的 tokens 的比例是大大超过我们合成的数据集的(要计算 loss 的 tokens 是对话中的 answer 部分, 合成数据集的样本中大部分都是 chunk, 这部分不计算 loss, 统计下来合成数据集的这个比例小于 1%). 所以 UltraChat 和合成数据集中的样本, 一定不要混合在一起进行 packing, 而是要分开 packing.</p>
+<p>我们在 4 个长度上进行了 SFT 训练, 训练拿对应长度的预训练模型进行初始化.</p>
+<p><img src="https://cdn.jsdelivr.net/gh/pixelock/notebook-images/images/20240514183200.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<h2 id="stage-2-训练长上下文的多模态模型">Stage 2: 训练长上下文的多模态模型
+</h2><p>经过 Stage 1 得到训练好的 LWM-Text 和 LWM-Text-Chat, 在 Stage 2 的目标是在 long video and language 序列上完成高效的联合训练.</p>
+<h3 id="如何修改模型架构以融合视觉">如何修改模型架构以融合视觉
+</h3><p>模型的整体结构如下图所示. LWM 是一个支持 1M tokens 序列的自回归 transformer. 每个视频帧被 tokenize 成 256 个 tokens. 这些视频帧 tokens 与 text tokens 拼接后, 送入到 transformer 中预测下一个 token, 这个 token 可能是 text token 也可能是 vision token.</p>
+<p><img src="https://cdn.jsdelivr.net/gh/pixelock/notebook-images/images/20240514200659.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p>视觉编码器使用的是 <a class="link" href="https://arxiv.org/abs/2012.09841"  target="_blank" rel="noopener"
+    >VQGAN</a>, 将 $256 \times 256$ 的图片输入 tokenize 成 $16 \times 16$ 的离散 tokens. 对于视频, 使用 VQGAN per-frame 对视频进行 tokenizing.</p>
+<p>为了在生成过程中区分两种模态, 知道何时进行切换, 需要标记</p>
+<ul>
+<li>text generation 的结束和 vision generation 的开始</li>
+<li>vision generation 的结束和 text generation 的开始</li>
+</ul>
+<p>为此引入, 为了定义视觉生成的结束, 引入了两个新的 mark token:</p>
+<ul>
+<li><code>&lt;eof&gt;</code>, end of frame. 在每个视频帧(除去整个视频的最后一帧)生成后添加</li>
+<li><code>&lt;eov&gt;</code>, end of video. 在生成的视频的最后一帧后添加, 以及如果生成的是单张图片, 在生成的图片后也引入这个符号</li>
+</ul>
+<p>另外, 为了定义 text generation 的结束, 使用 <code>&lt;vision&gt;</code> 和 <code>&lt;/vision&gt;</code> 将 vision tokens 包围住.</p>
+<p>需要注意的是 <code>&lt;eof&gt;</code> 和 <code>&lt;eov&gt;</code> 各自对应一个特殊 token, 而 <code>&lt;vision&gt;</code> 和 <code>&lt;/vision&gt;</code> 不是特殊 token, 要作为 text 对待, 使用 tokenizer 转化为对应的 tokens.</p>
+<p>输入输出中不同类别的 tokens 在训练集中有不同的拼接顺序, 包含:</p>
+<ul>
+<li>image-text</li>
+<li>text-image</li>
+<li>video, 也就是多个 images</li>
+<li>text-video</li>
+<li>text</li>
+</ul>
+<p>上面模型的架构图中就是一种 image-text 的拼接形式.</p>
+<h3 id="训练过程-1">训练过程
+</h3><p>使用预训练得到的 LWM-Text-1M 语言模型进行初始化. 而且跟上面训练纯文本的模型一样, 也是分多步, 逐渐扩大多模态模型的上下文长度, 最终得到一个 1M 上下文大小的多模态模型.</p>
+<p>这个多步逐渐扩大长度训练的过程, 使用的数据是 text-image 和 text-video 数据的混合. 另外与训练纯文本不同的是, 由于我们用 LWM-Text-1M 进行初始化, 模型已经支持了 1M 上下文的长度, 因此在这里训练多模态能力时, RoPE 的 $\theta$ 就不再使用纯文本中的倍数扩增, 而是使用固定值 $\theta=50\text{M}$. 一个阶段训练结束后, 作为下一个阶段的初始化. 各个阶段训练的情况如下:</p>
+<p><img src="https://cdn.jsdelivr.net/gh/pixelock/notebook-images/images/20240514202033.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p>每个阶段使用的训练集如下.</p>
+<ul>
+<li><strong>LWM-1K</strong>: 使用的是 text-image dataset, 由 LAION-2B-en 和 COYO-700M 两个数据集混合得到. 过滤掉分辨率不足 256 的样本, 总共收集了大约 1B 个 text-image 数据对
+<ul>
+<li>在训练过程中, 将 text-image pairs 拼接起来, 并且随机将两种模态的顺序进行交换, 来建模:
+<ul>
+<li>text-image generation 任务</li>
+<li>unconditional image generation 任务</li>
+<li>image captioning 任务</li>
+</ul>
+</li>
+<li>pack text-image pairs 达到 1K 的 tokens 序列长度</li>
+</ul>
+</li>
+<li><strong>LWM-8K</strong>: 使用的是 text-video 训练集, 由 WebVid10M 和 3M InternVid10M 混合得到. 把 images 和 video 看成两种模态的话, 这里的数据集这两种模态各占 50%. 将 30 帧的视频帧转换为 4FPS
+<ul>
+<li>将 images pack 成 8K 的序列长度</li>
+<li>同样的, 随机对每个 text-video pair 中两种模态的顺序进行交换</li>
+</ul>
+</li>
+<li><strong>LWM-Chat-32K/128K/1M</strong>: 最后 3 个阶段, 混合了以下四种下游任务分别对应的 chat data:
+<ul>
+<li>text-image generation</li>
+<li>image understanding</li>
+<li>text-video generation</li>
+<li>video understanding</li>
+<li>其中 text-image generation 和 text-video generation 是从多模态预训练数据中抽取了子集, 并按 chat format 构造了数据集</li>
+<li>image understanding 使用了 ShareGPT4V 中的 image chat instruct data</li>
+<li>video understanding 使用了 Valley-Instruct-73K 和 Video-ChatGPT-100K 两个数据集混合后其中的 instruct data</li>
+<li>对于 text-image generation, image understanding, text-video generation 这三类 chat data, 属于 short context data, 使用 packing 方法将他们拼接成要训练的上下文长度</li>
+<li>Packing 之后, 在计算 attention 的时候, 要特别注意 mask 的方案, 每个 text-vision pair 只能看到它们自己这对</li>
+<li>对于 video understanding data, 如果视频太长, 会采样一个满足训练上下文长度的最大数量的帧数</li>
+<li>在训练过程中, 对于每个 batch, 为 4 个任务各分配 25% 的比例</li>
+</ul>
+</li>
+</ul>
+<p>对于 LWM-1K 和 LWM-8K 这前两个阶段, 还增加混合了 16% 的 pure text data, 使用的是 OpenLLaMA 数据集, 以防止语言能力在多模态训练过程中退化. 混合的方式是一整个 batch 都是 pure text data, 相当于多了 16% 的 pure text batch.</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/llm/">LLM</a>
+        
+            <a href="/tags/model/">Model</a>
+        
+            <a href="/tags/pre-training/">Pre-Training</a>
+        
+            <a href="/tags/sft/">SFT</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI&#43;WdtXRGWt2kTvGFasHpSy3SV"crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG&#43;vnGctmUb0ZY0l8"crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"integrity="sha384-&#43;VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4&#43;/RRE05"crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.body, {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ],
+            ignoredClasses: ["gist"]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/p/llama-2-insight/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Llama 2 Insight</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/deepseek-v2-insight/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Deepseek V2 Insight</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    <div class="disqus-container">
+    <div id="disqus_thread"></div>
+<script>
+    window.disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "hugo-theme-stack" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div>
+
+<style>
+    .disqus-container {
+        background-color: var(--card-background);
+        border-radius: var(--card-border-radius);
+        box-shadow: var(--shadow-l1);
+        padding: var(--card-padding);
+    }
+</style>
+
+<script>
+    window.addEventListener('onColorSchemeChange', (e) => {
+        if (typeof DISQUS == 'object') {
+            DISQUS.reset({
+                reload: true
+            });
+        }
+    })
+</script>
+
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+        2024 pixelock
+    </section>
+    
+    <section class="powerby">
+        
+            Hello my friend <br/>
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.26.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

@@ -3,7 +3,7 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>http://localhost:1313/</loc>
-    <lastmod>2024-05-13T23:11:05+08:00</lastmod>
+    <lastmod>2024-05-16T23:39:39+08:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="en"
@@ -16,7 +16,7 @@
                 />
   </url><url>
     <loc>http://localhost:1313/categories/</loc>
-    <lastmod>2024-05-13T23:11:05+08:00</lastmod>
+    <lastmod>2024-05-16T23:39:39+08:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="en"
@@ -28,32 +28,35 @@
                 href="http://localhost:1313/categories/"
                 />
   </url><url>
-    <loc>http://localhost:1313/tags/llama/</loc>
-    <lastmod>2024-05-13T23:11:05+08:00</lastmod>
-  </url><url>
-    <loc>http://localhost:1313/p/llama-2-insight/</loc>
-    <lastmod>2024-05-13T23:11:05+08:00</lastmod>
-  </url><url>
     <loc>http://localhost:1313/tags/llm/</loc>
-    <lastmod>2024-05-13T23:11:05+08:00</lastmod>
+    <lastmod>2024-05-16T23:39:39+08:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/categories/llm/model/</loc>
-    <lastmod>2024-05-13T23:11:05+08:00</lastmod>
+    <lastmod>2024-05-16T23:39:39+08:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/categories/llm/model/longcontext/</loc>
+    <lastmod>2024-05-16T23:39:39+08:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/categories/llm/model/multimodal/</loc>
+    <lastmod>2024-05-16T23:39:39+08:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/p/lwm-insight/</loc>
+    <lastmod>2024-05-16T23:39:39+08:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/tags/model/</loc>
-    <lastmod>2024-05-13T23:11:05+08:00</lastmod>
+    <lastmod>2024-05-16T23:39:39+08:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/post/</loc>
-    <lastmod>2024-05-13T23:11:05+08:00</lastmod>
+    <lastmod>2024-05-16T23:39:39+08:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/tags/pre-training/</loc>
-    <lastmod>2024-05-13T23:11:05+08:00</lastmod>
+    <lastmod>2024-05-16T23:39:39+08:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/rlhf/</loc>
-    <lastmod>2024-05-13T23:11:05+08:00</lastmod>
+    <loc>http://localhost:1313/tags/sft/</loc>
+    <lastmod>2024-05-16T23:39:39+08:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/tags/</loc>
-    <lastmod>2024-05-13T23:11:05+08:00</lastmod>
+    <lastmod>2024-05-16T23:39:39+08:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="en"
@@ -64,6 +67,18 @@
                 hreflang="zh-cn"
                 href="http://localhost:1313/tags/"
                 />
+  </url><url>
+    <loc>http://localhost:1313/tags/llama/</loc>
+    <lastmod>2024-05-13T23:11:05+08:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/p/llama-2-insight/</loc>
+    <lastmod>2024-05-13T23:11:05+08:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/rlhf/</loc>
+    <lastmod>2024-05-13T23:11:05+08:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/deepseek/</loc>
+    <lastmod>2024-05-13T10:28:37+08:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/p/deepseek-v2-insight/</loc>
     <lastmod>2024-05-13T10:28:37+08:00</lastmod>

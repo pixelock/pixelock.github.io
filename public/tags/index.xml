@@ -7,7 +7,39 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>pixelock</copyright>
-        <lastBuildDate>Mon, 13 May 2024 23:11:05 +0800</lastBuildDate><atom:link href="http://localhost:1313/tags/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Thu, 16 May 2024 23:39:39 +0800</lastBuildDate><atom:link href="http://localhost:1313/tags/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>LLM</title>
+        <link>http://localhost:1313/tags/llm/</link>
+        <pubDate>Thu, 16 May 2024 23:39:39 +0800</pubDate>
+        
+        <guid>http://localhost:1313/tags/llm/</guid>
+        <description></description>
+        </item>
+        <item>
+        <title>Model</title>
+        <link>http://localhost:1313/tags/model/</link>
+        <pubDate>Thu, 16 May 2024 23:39:39 +0800</pubDate>
+        
+        <guid>http://localhost:1313/tags/model/</guid>
+        <description></description>
+        </item>
+        <item>
+        <title>Pre-Training</title>
+        <link>http://localhost:1313/tags/pre-training/</link>
+        <pubDate>Thu, 16 May 2024 23:39:39 +0800</pubDate>
+        
+        <guid>http://localhost:1313/tags/pre-training/</guid>
+        <description></description>
+        </item>
+        <item>
+        <title>SFT</title>
+        <link>http://localhost:1313/tags/sft/</link>
+        <pubDate>Thu, 16 May 2024 23:39:39 +0800</pubDate>
+        
+        <guid>http://localhost:1313/tags/sft/</guid>
+        <description></description>
+        </item>
+        <item>
         <title>LLaMA</title>
         <link>http://localhost:1313/tags/llama/</link>
         <pubDate>Mon, 13 May 2024 23:11:05 +0800</pubDate>
@@ -16,35 +48,19 @@
         <description></description>
         </item>
         <item>
-        <title>LLM</title>
-        <link>http://localhost:1313/tags/llm/</link>
-        <pubDate>Mon, 13 May 2024 23:11:05 +0800</pubDate>
-        
-        <guid>http://localhost:1313/tags/llm/</guid>
-        <description></description>
-        </item>
-        <item>
-        <title>Model</title>
-        <link>http://localhost:1313/tags/model/</link>
-        <pubDate>Mon, 13 May 2024 23:11:05 +0800</pubDate>
-        
-        <guid>http://localhost:1313/tags/model/</guid>
-        <description></description>
-        </item>
-        <item>
-        <title>Pre-Training</title>
-        <link>http://localhost:1313/tags/pre-training/</link>
-        <pubDate>Mon, 13 May 2024 23:11:05 +0800</pubDate>
-        
-        <guid>http://localhost:1313/tags/pre-training/</guid>
-        <description></description>
-        </item>
-        <item>
         <title>RLHF</title>
         <link>http://localhost:1313/tags/rlhf/</link>
         <pubDate>Mon, 13 May 2024 23:11:05 +0800</pubDate>
         
         <guid>http://localhost:1313/tags/rlhf/</guid>
+        <description></description>
+        </item>
+        <item>
+        <title>DeepSeek</title>
+        <link>http://localhost:1313/tags/deepseek/</link>
+        <pubDate>Mon, 13 May 2024 10:28:37 +0800</pubDate>
+        
+        <guid>http://localhost:1313/tags/deepseek/</guid>
         <description></description>
         </item>
         
