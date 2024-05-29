@@ -7,10 +7,10 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>pixelock</copyright>
-        <lastBuildDate>Thu, 16 May 2024 23:39:39 +0800</lastBuildDate><atom:link href="http://localhost:1313/tags/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Fri, 17 May 2024 09:41:52 +0800</lastBuildDate><atom:link href="http://localhost:1313/tags/index.xml" rel="self" type="application/rss+xml" /><item>
         <title>LLM</title>
         <link>http://localhost:1313/tags/llm/</link>
-        <pubDate>Thu, 16 May 2024 23:39:39 +0800</pubDate>
+        <pubDate>Fri, 17 May 2024 09:41:52 +0800</pubDate>
         
         <guid>http://localhost:1313/tags/llm/</guid>
         <description></description>
@@ -18,7 +18,7 @@
         <item>
         <title>Model</title>
         <link>http://localhost:1313/tags/model/</link>
-        <pubDate>Thu, 16 May 2024 23:39:39 +0800</pubDate>
+        <pubDate>Fri, 17 May 2024 09:41:52 +0800</pubDate>
         
         <guid>http://localhost:1313/tags/model/</guid>
         <description></description>
@@ -26,7 +26,7 @@
         <item>
         <title>Pre-Training</title>
         <link>http://localhost:1313/tags/pre-training/</link>
-        <pubDate>Thu, 16 May 2024 23:39:39 +0800</pubDate>
+        <pubDate>Fri, 17 May 2024 09:41:52 +0800</pubDate>
         
         <guid>http://localhost:1313/tags/pre-training/</guid>
         <description></description>
@@ -34,7 +34,7 @@
         <item>
         <title>SFT</title>
         <link>http://localhost:1313/tags/sft/</link>
-        <pubDate>Thu, 16 May 2024 23:39:39 +0800</pubDate>
+        <pubDate>Fri, 17 May 2024 09:41:52 +0800</pubDate>
         
         <guid>http://localhost:1313/tags/sft/</guid>
         <description></description>

@@ -1,7 +1,7 @@
 baseurl: https://pixelock.github.io
 languageCode: zh-cn
 theme: stack
-paginate: 3
+paginate: 5
 title: 外置记忆体
 copyright: pixelock
 
